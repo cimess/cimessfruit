@@ -1,0 +1,962 @@
+{
+  "generatedAt": "2026-10-29T12:59:37.024Z",
+  "syntheticOnly": true,
+  "providerPerformance": false,
+  "results": {
+    "products": {
+      "scope": "Local uncached API-handler/database path; no HTTP/auth/TLS/provider or constrained-resource simulation",
+      "products": 100,
+      "cases": {
+        "newest": {
+          "samples": 15,
+          "p50Ms": 8.880130999999892,
+          "p95Ms": 23.973252000000002,
+          "responseBytes": 9860,
+          "returned": 20
+        },
+        "price": {
+          "samples": 15,
+          "p50Ms": 5.581390000000056,
+          "p95Ms": 11.32346799999982,
+          "responseBytes": 9863,
+          "returned": 20
+        },
+        "search": {
+          "samples": 15,
+          "p50Ms": 3.9791159999999763,
+          "p95Ms": 5.960716000000048,
+          "responseBytes": 9949,
+          "returned": 20
+        }
+      },
+      "searchPlan": [
+        "Seq Scan on \"Product\"  (cost=0.00..3.50 rows=34 width=16) (actual time=0.008..0.065 rows=34 loops=1)",
+        "  Filter: (\"isAvailable\" AND ((name ~~* '%Pineapple%'::text) OR (description ~~* '%Pineapple%'::text)))",
+        "  Rows Removed by Filter: 66",
+        "  Buffers: shared hit=2",
+        "Planning Time: 0.084 ms",
+        "Execution Time: 0.076 ms"
+      ],
+      "note": "Current API sorts matching rows in memory; cursor limits response bytes, not database matches. No trigram/index change applied."
+    },
+    "orders": {
+      "scope": "Local read-only warm Prisma queries; excludes HTTP/auth/cache/network-to-cloud costs",
+      "counts": {
+        "orders": 1000,
+        "payments": 1000,
+        "items": 1000
+      },
+      "previous": {
+        "samples": 30,
+        "p50Ms": 10.98,
+        "p95Ms": 16.82,
+        "responseBytes": 118112
+      },
+      "current": {
+        "samples": 30,
+        "p50Ms": 5.81,
+        "p95Ms": 7.73,
+        "responseBytes": 8000
+      },
+      "indexes": [
+        {
+          "tablename": "Order",
+          "indexname": "Order_deliveryZoneId_idx",
+          "indexdef": "CREATE INDEX \"Order_deliveryZoneId_idx\" ON public.\"Order\" USING btree (\"deliveryZoneId\")"
+        },
+        {
+          "tablename": "Order",
+          "indexname": "Order_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"Order_pkey\" ON public.\"Order\" USING btree (id)"
+        },
+        {
+          "tablename": "Order",
+          "indexname": "Order_status_createdAt_idx",
+          "indexdef": "CREATE INDEX \"Order_status_createdAt_idx\" ON public.\"Order\" USING btree (status, \"createdAt\")"
+        },
+        {
+          "tablename": "Order",
+          "indexname": "Order_userId_createdAt_idx",
+          "indexdef": "CREATE INDEX \"Order_userId_createdAt_idx\" ON public.\"Order\" USING btree (\"userId\", \"createdAt\" DESC)"
+        },
+        {
+          "tablename": "Order",
+          "indexname": "Order_userId_idempotencyKey_key",
+          "indexdef": "CREATE UNIQUE INDEX \"Order_userId_idempotencyKey_key\" ON public.\"Order\" USING btree (\"userId\", \"idempotencyKey\")"
+        },
+        {
+          "tablename": "OrderItem",
+          "indexname": "OrderItem_orderId_idx",
+          "indexdef": "CREATE INDEX \"OrderItem_orderId_idx\" ON public.\"OrderItem\" USING btree (\"orderId\")"
+        },
+        {
+          "tablename": "OrderItem",
+          "indexname": "OrderItem_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"OrderItem_pkey\" ON public.\"OrderItem\" USING btree (id)"
+        },
+        {
+          "tablename": "OrderItem",
+          "indexname": "OrderItem_productOptionId_idx",
+          "indexdef": "CREATE INDEX \"OrderItem_productOptionId_idx\" ON public.\"OrderItem\" USING btree (\"productOptionId\")"
+        },
+        {
+          "tablename": "Payment",
+          "indexname": "Payment_orderId_key",
+          "indexdef": "CREATE UNIQUE INDEX \"Payment_orderId_key\" ON public.\"Payment\" USING btree (\"orderId\")"
+        },
+        {
+          "tablename": "Payment",
+          "indexname": "Payment_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"Payment_pkey\" ON public.\"Payment\" USING btree (id)"
+        },
+        {
+          "tablename": "Payment",
+          "indexname": "Payment_providerReference_key",
+          "indexdef": "CREATE UNIQUE INDEX \"Payment_providerReference_key\" ON public.\"Payment\" USING btree (\"providerReference\")"
+        }
+      ],
+      "parentQueryPlan": [
+        "Limit  (cost=113.60..113.65 rows=21 width=24) (actual time=1.037..1.042 rows=21 loops=1)",
+        "  Buffers: shared hit=49",
+        "  ->  Sort  (cost=113.60..116.10 rows=1000 width=24) (actual time=1.036..1.039 rows=21 loops=1)",
+        "        Sort Key: o.\"createdAt\" DESC, o.id DESC",
+        "        Sort Method: top-N heapsort  Memory: 26kB",
+        "        Buffers: shared hit=49",
+        "        ->  Hash Join  (cost=44.00..86.64 rows=1000 width=24) (actual time=0.399..0.875 rows=1000 loops=1)",
+        "              Hash Cond: (o.id = p.\"orderId\")",
+        "              Buffers: shared hit=49",
+        "              ->  Seq Scan on \"Order\" o  (cost=0.00..40.00 rows=1000 width=24) (actual time=0.006..0.259 rows=1000 loops=1)",
+        "                    Buffers: shared hit=30",
+        "              ->  Hash  (cost=31.50..31.50 rows=1000 width=16) (actual time=0.387..0.388 rows=1000 loops=1)",
+        "                    Buckets: 1024  Batches: 1  Memory Usage: 55kB",
+        "                    Buffers: shared hit=19",
+        "                    ->  Seq Scan on \"Payment\" p  (cost=0.00..31.50 rows=1000 width=16) (actual time=0.003..0.222 rows=1000 loops=1)",
+        "                          Filter: (provider = 'manual_transfer'::text)",
+        "                          Buffers: shared hit=19",
+        "Planning:",
+        "  Buffers: shared hit=24",
+        "Planning Time: 0.247 ms",
+        "Execution Time: 1.062 ms"
+      ]
+    },
+    "inbox": {
+      "scope": "Local read-only warm Prisma reads; excludes HTTP/auth/cloud latency",
+      "counts": {
+        "conversations": 1000,
+        "messages": 2000
+      },
+      "previous": {
+        "samples": 30,
+        "p50Ms": 6.99,
+        "p95Ms": 10.41,
+        "responseBytes": 47809
+      },
+      "current": {
+        "samples": 30,
+        "p50Ms": 3.77,
+        "p95Ms": 4.62,
+        "responseBytes": 6430
+      },
+      "indexes": [
+        {
+          "tablename": "Conversation",
+          "indexname": "Conversation_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"Conversation_pkey\" ON public.\"Conversation\" USING btree (id)"
+        },
+        {
+          "tablename": "Conversation",
+          "indexname": "Conversation_userId_updatedAt_idx",
+          "indexdef": "CREATE INDEX \"Conversation_userId_updatedAt_idx\" ON public.\"Conversation\" USING btree (\"userId\", \"updatedAt\")"
+        },
+        {
+          "tablename": "ConversationMessage",
+          "indexname": "ConversationMessage_conversationId_createdAt_idx",
+          "indexdef": "CREATE INDEX \"ConversationMessage_conversationId_createdAt_idx\" ON public.\"ConversationMessage\" USING btree (\"conversationId\", \"createdAt\")"
+        },
+        {
+          "tablename": "ConversationMessage",
+          "indexname": "ConversationMessage_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"ConversationMessage_pkey\" ON public.\"ConversationMessage\" USING btree (id)"
+        }
+      ],
+      "parentQueryPlan": [
+        "Limit  (cost=50.96..51.01 rows=21 width=24) (actual time=0.721..0.727 rows=21 loops=1)",
+        "  Buffers: shared hit=14",
+        "  ->  Sort  (cost=50.96..53.46 rows=1000 width=24) (actual time=0.719..0.722 rows=21 loops=1)",
+        "        Sort Key: \"updatedAt\" DESC, id DESC",
+        "        Sort Method: top-N heapsort  Memory: 26kB",
+        "        Buffers: shared hit=14",
+        "        ->  Seq Scan on \"Conversation\"  (cost=0.00..24.00 rows=1000 width=24) (actual time=0.012..0.339 rows=1000 loops=1)",
+        "              Buffers: shared hit=14",
+        "Planning Time: 0.079 ms",
+        "Execution Time: 0.744 ms"
+      ]
+    },
+    "email": {
+      "scope": "Local read-only warm SQL round trips; excludes bcrypt/auth/HTTP/cloud costs",
+      "audit": {
+        "emailCount": 1000,
+        "noncanonical": 0,
+        "collisionGroups": 0
+      },
+      "matchedSample": true,
+      "previous": {
+        "samples": 30,
+        "p50Ms": 0.376,
+        "p95Ms": 0.914
+      },
+      "current": {
+        "samples": 30,
+        "p50Ms": 0.337,
+        "p95Ms": 0.819
+      },
+      "indexes": [
+        {
+          "indexname": "User_email_key",
+          "indexdef": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)"
+        }
+      ],
+      "plans": {
+        "previous": {
+          "executionMs": 0.014,
+          "nodes": [
+            {
+              "type": "Limit",
+              "actualRows": 1
+            },
+            {
+              "type": "Seq Scan",
+              "relation": "User",
+              "actualRows": 1
+            }
+          ]
+        },
+        "current": {
+          "executionMs": 0.029,
+          "nodes": [
+            {
+              "type": "Limit",
+              "actualRows": 1
+            },
+            {
+              "type": "Index Scan",
+              "relation": "User",
+              "index": "User_email_key",
+              "actualRows": 1
+            }
+          ]
+        }
+      }
+    },
+    "delivery": {
+      "scope": "Local read-only warm SQL round trips; excludes Redis, polygon evaluation, auth/HTTP/cloud costs",
+      "counts": {
+        "zones": 26,
+        "available": 26,
+        "withBoundary": 0
+      },
+      "queries": {
+        "checkoutById": {
+          "samples": 30,
+          "p50Ms": 0.406,
+          "p95Ms": 1.036,
+          "executionMs": 0.016,
+          "nodes": [
+            {
+              "type": "Seq Scan",
+              "actualRows": 1,
+              "sharedHits": 1,
+              "sharedReads": 0
+            }
+          ]
+        },
+        "availableByName": {
+          "samples": 30,
+          "p50Ms": 0.522,
+          "p95Ms": 0.689,
+          "executionMs": 0.045,
+          "nodes": [
+            {
+              "type": "Sort",
+              "actualRows": 26,
+              "sortMemoryKb": 28,
+              "sharedHits": 1,
+              "sharedReads": 0
+            },
+            {
+              "type": "Seq Scan",
+              "actualRows": 26,
+              "sharedHits": 1,
+              "sharedReads": 0
+            }
+          ]
+        },
+        "availableById": {
+          "samples": 30,
+          "p50Ms": 0.513,
+          "p95Ms": 0.94,
+          "executionMs": 0.04,
+          "nodes": [
+            {
+              "type": "Sort",
+              "actualRows": 26,
+              "sortMemoryKb": 28,
+              "sharedHits": 1,
+              "sharedReads": 0
+            },
+            {
+              "type": "Seq Scan",
+              "actualRows": 26,
+              "sharedHits": 1,
+              "sharedReads": 0
+            }
+          ]
+        },
+        "adminByName": {
+          "samples": 30,
+          "p50Ms": 0.528,
+          "p95Ms": 1.037,
+          "executionMs": 0.035,
+          "nodes": [
+            {
+              "type": "Sort",
+              "actualRows": 26,
+              "sortMemoryKb": 28,
+              "sharedHits": 1,
+              "sharedReads": 0
+            },
+            {
+              "type": "Seq Scan",
+              "actualRows": 26,
+              "sharedHits": 1,
+              "sharedReads": 0
+            }
+          ]
+        },
+        "availableByNameAndId": {
+          "samples": 30,
+          "p50Ms": 0.521,
+          "p95Ms": 0.859,
+          "executionMs": 0.038,
+          "nodes": [
+            {
+              "type": "Sort",
+              "actualRows": 26,
+              "sortMemoryKb": 28,
+              "sharedHits": 1,
+              "sharedReads": 0
+            },
+            {
+              "type": "Seq Scan",
+              "actualRows": 26,
+              "sharedHits": 1,
+              "sharedReads": 0
+            }
+          ]
+        }
+      },
+      "indexes": [
+        {
+          "tablename": "Account",
+          "indexname": "Account_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"Account_pkey\" ON public.\"Account\" USING btree (id)"
+        },
+        {
+          "tablename": "Account",
+          "indexname": "Account_provider_providerAccountId_key",
+          "indexdef": "CREATE UNIQUE INDEX \"Account_provider_providerAccountId_key\" ON public.\"Account\" USING btree (provider, \"providerAccountId\")"
+        },
+        {
+          "tablename": "Account",
+          "indexname": "Account_userId_idx",
+          "indexdef": "CREATE INDEX \"Account_userId_idx\" ON public.\"Account\" USING btree (\"userId\")"
+        },
+        {
+          "tablename": "AuthRateLimit",
+          "indexname": "AuthRateLimit_expires_idx",
+          "indexdef": "CREATE INDEX \"AuthRateLimit_expires_idx\" ON public.\"AuthRateLimit\" USING btree (expires)"
+        },
+        {
+          "tablename": "AuthRateLimit",
+          "indexname": "AuthRateLimit_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"AuthRateLimit_pkey\" ON public.\"AuthRateLimit\" USING btree (key)"
+        },
+        {
+          "tablename": "DeliveryZone",
+          "indexname": "DeliveryZone_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"DeliveryZone_pkey\" ON public.\"DeliveryZone\" USING btree (id)"
+        },
+        {
+          "tablename": "MobileAuthGrant",
+          "indexname": "MobileAuthGrant_expires_idx",
+          "indexdef": "CREATE INDEX \"MobileAuthGrant_expires_idx\" ON public.\"MobileAuthGrant\" USING btree (expires)"
+        },
+        {
+          "tablename": "MobileAuthGrant",
+          "indexname": "MobileAuthGrant_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"MobileAuthGrant_pkey\" ON public.\"MobileAuthGrant\" USING btree (\"codeHash\")"
+        },
+        {
+          "tablename": "MobileAuthGrant",
+          "indexname": "MobileAuthGrant_userId_idx",
+          "indexdef": "CREATE INDEX \"MobileAuthGrant_userId_idx\" ON public.\"MobileAuthGrant\" USING btree (\"userId\")"
+        },
+        {
+          "tablename": "ProductOption",
+          "indexname": "ProductOption_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"ProductOption_pkey\" ON public.\"ProductOption\" USING btree (id)"
+        },
+        {
+          "tablename": "ProductOption",
+          "indexname": "ProductOption_productId_size_key",
+          "indexdef": "CREATE UNIQUE INDEX \"ProductOption_productId_size_key\" ON public.\"ProductOption\" USING btree (\"productId\", size)"
+        },
+        {
+          "tablename": "Session",
+          "indexname": "Session_expires_idx",
+          "indexdef": "CREATE INDEX \"Session_expires_idx\" ON public.\"Session\" USING btree (expires)"
+        },
+        {
+          "tablename": "Session",
+          "indexname": "Session_pkey",
+          "indexdef": "CREATE UNIQUE INDEX \"Session_pkey\" ON public.\"Session\" USING btree (id)"
+        },
+        {
+          "tablename": "Session",
+          "indexname": "Session_sessionToken_key",
+          "indexdef": "CREATE UNIQUE INDEX \"Session_sessionToken_key\" ON public.\"Session\" USING btree (\"sessionToken\")"
+        },
+        {
+          "tablename": "Session",
+          "indexname": "Session_userId_idx",
+          "indexdef": "CREATE INDEX \"Session_userId_idx\" ON public.\"Session\" USING btree (\"userId\")"
+        },
+        {
+          "tablename": "VerificationToken",
+          "indexname": "VerificationToken_expires_idx",
+          "indexdef": "CREATE INDEX \"VerificationToken_expires_idx\" ON public.\"VerificationToken\" USING btree (expires)"
+        },
+        {
+          "tablename": "VerificationToken",
+          "indexname": "VerificationToken_identifier_token_key",
+          "indexdef": "CREATE UNIQUE INDEX \"VerificationToken_identifier_token_key\" ON public.\"VerificationToken\" USING btree (identifier, token)"
+        },
+        {
+          "tablename": "VerificationToken",
+          "indexname": "VerificationToken_token_key",
+          "indexdef": "CREATE UNIQUE INDEX \"VerificationToken_token_key\" ON public.\"VerificationToken\" USING btree (token)"
+        }
+      ]
+    },
+    "maintenance": {
+      "syntheticOnly": true,
+      "scope": "Read-only local selection queries; no deletion or constrained/cloud simulation",
+      "results": {
+        "expiredReservations": {
+          "samples": 30,
+          "p50Ms": 0.8604160000000434,
+          "p95Ms": 1.4514819999999986,
+          "plan": [
+            {
+              "Plan": {
+                "Node Type": "Limit",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 1.45,
+                "Total Cost": 20.02,
+                "Plan Rows": 20,
+                "Plan Width": 24,
+                "Actual Startup Time": 0.073,
+                "Actual Total Time": 0.076,
+                "Actual Rows": 20,
+                "Actual Loops": 1,
+                "Shared Hit Blocks": 66,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Incremental Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 1.45,
+                    "Total Cost": 289.24,
+                    "Plan Rows": 310,
+                    "Plan Width": 24,
+                    "Actual Startup Time": 0.072,
+                    "Actual Total Time": 0.074,
+                    "Actual Rows": 20,
+                    "Actual Loops": 1,
+                    "Sort Key": [
+                      "o.\"createdAt\"",
+                      "o.id"
+                    ],
+                    "Presorted Key": [
+                      "o.\"createdAt\""
+                    ],
+                    "Full-sort Groups": {
+                      "Group Count": 1,
+                      "Sort Methods Used": [
+                        "quicksort"
+                      ],
+                      "Sort Space Memory": {
+                        "Average Sort Space Used": 26,
+                        "Peak Sort Space Used": 26
+                      }
+                    },
+                    "Shared Hit Blocks": 66,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Nested Loop",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Join Type": "Inner",
+                        "Startup Cost": 0.56,
+                        "Total Cost": 275.29,
+                        "Plan Rows": 310,
+                        "Plan Width": 24,
+                        "Actual Startup Time": 0.023,
+                        "Actual Total Time": 0.064,
+                        "Actual Rows": 21,
+                        "Actual Loops": 1,
+                        "Inner Unique": true,
+                        "Shared Hit Blocks": 66,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0,
+                        "Plans": [
+                          {
+                            "Node Type": "Index Scan",
+                            "Parent Relationship": "Outer",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Scan Direction": "Forward",
+                            "Index Name": "Order_status_createdAt_idx",
+                            "Relation Name": "Order",
+                            "Alias": "o",
+                            "Startup Cost": 0.28,
+                            "Total Cost": 79.07,
+                            "Plan Rows": 310,
+                            "Plan Width": 24,
+                            "Actual Startup Time": 0.016,
+                            "Actual Total Time": 0.022,
+                            "Actual Rows": 21,
+                            "Actual Loops": 1,
+                            "Index Cond": "((status = 'PENDING'::\"OrderStatus\") AND (\"createdAt\" <= (now() - '24:00:00'::interval)))",
+                            "Rows Removed by Index Recheck": 0,
+                            "Filter": "(\"paymentStatus\" = 'PENDING'::\"PaymentStatus\")",
+                            "Rows Removed by Filter": 0,
+                            "Shared Hit Blocks": 3,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0
+                          },
+                          {
+                            "Node Type": "Index Scan",
+                            "Parent Relationship": "Inner",
+                            "Parallel Aware": false,
+                            "Async Capable": false,
+                            "Scan Direction": "Forward",
+                            "Index Name": "Payment_orderId_key",
+                            "Relation Name": "Payment",
+                            "Alias": "p",
+                            "Startup Cost": 0.28,
+                            "Total Cost": 0.63,
+                            "Plan Rows": 1,
+                            "Plan Width": 16,
+                            "Actual Startup Time": 0.002,
+                            "Actual Total Time": 0.002,
+                            "Actual Rows": 1,
+                            "Actual Loops": 21,
+                            "Index Cond": "(\"orderId\" = o.id)",
+                            "Rows Removed by Index Recheck": 0,
+                            "Filter": "((status = 'PENDING'::\"PaymentStatus\") AND (provider = 'manual_transfer'::text))",
+                            "Rows Removed by Filter": 0,
+                            "Shared Hit Blocks": 63,
+                            "Shared Read Blocks": 0,
+                            "Shared Dirtied Blocks": 0,
+                            "Shared Written Blocks": 0,
+                            "Local Hit Blocks": 0,
+                            "Local Read Blocks": 0,
+                            "Local Dirtied Blocks": 0,
+                            "Local Written Blocks": 0,
+                            "Temp Read Blocks": 0,
+                            "Temp Written Blocks": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Planning": {
+                "Shared Hit Blocks": 12,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              "Planning Time": 0.206,
+              "Triggers": [],
+              "Execution Time": 0.101
+            }
+          ]
+        },
+        "expiredTokens": {
+          "samples": 30,
+          "p50Ms": 0.8832299999999691,
+          "p95Ms": 1.3050150000000258,
+          "plan": [
+            {
+              "Plan": {
+                "Node Type": "Limit",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 33.76,
+                "Total Cost": 56.44,
+                "Plan Rows": 200,
+                "Plan Width": 45,
+                "Actual Startup Time": 0.214,
+                "Actual Total Time": 0.241,
+                "Actual Rows": 200,
+                "Actual Loops": 1,
+                "Shared Hit Blocks": 12,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Incremental Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 33.76,
+                    "Total Cost": 147.15,
+                    "Plan Rows": 1000,
+                    "Plan Width": 45,
+                    "Actual Startup Time": 0.213,
+                    "Actual Total Time": 0.225,
+                    "Actual Rows": 200,
+                    "Actual Loops": 1,
+                    "Sort Key": [
+                      "expires",
+                      "token"
+                    ],
+                    "Presorted Key": [
+                      "expires"
+                    ],
+                    "Full-sort Groups": {
+                      "Group Count": 1,
+                      "Sort Methods Used": [
+                        "quicksort"
+                      ],
+                      "Sort Space Memory": {
+                        "Average Sort Space Used": 29,
+                        "Peak Sort Space Used": 29
+                      }
+                    },
+                    "Pre-sorted Groups": {
+                      "Group Count": 1,
+                      "Sort Methods Used": [
+                        "quicksort"
+                      ],
+                      "Sort Space Memory": {
+                        "Average Sort Space Used": 43,
+                        "Peak Sort Space Used": 43
+                      }
+                    },
+                    "Shared Hit Blocks": 12,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "VerificationToken_expires_idx",
+                        "Relation Name": "VerificationToken",
+                        "Alias": "VerificationToken",
+                        "Startup Cost": 0.15,
+                        "Total Cost": 94.74,
+                        "Plan Rows": 1000,
+                        "Plan Width": 45,
+                        "Actual Startup Time": 0.015,
+                        "Actual Total Time": 0.083,
+                        "Actual Rows": 266,
+                        "Actual Loops": 1,
+                        "Index Cond": "(expires < now())",
+                        "Rows Removed by Index Recheck": 0,
+                        "Shared Hit Blocks": 12,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Planning": {
+                "Shared Hit Blocks": 0,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              "Planning Time": 0.06,
+              "Triggers": [],
+              "Execution Time": 0.27
+            }
+          ]
+        },
+        "prefixTokens": {
+          "samples": 30,
+          "p50Ms": 0.4714370000000372,
+          "p95Ms": 2.0003429999999867,
+          "plan": [
+            {
+              "Plan": {
+                "Node Type": "Index Only Scan",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "VerificationToken_identifier_token_key",
+                "Relation Name": "VerificationToken",
+                "Alias": "VerificationToken",
+                "Startup Cost": 0.28,
+                "Total Cost": 8.3,
+                "Plan Rows": 1,
+                "Plan Width": 37,
+                "Actual Startup Time": 0.012,
+                "Actual Total Time": 0.013,
+                "Actual Rows": 1,
+                "Actual Loops": 1,
+                "Index Cond": "((identifier >= 'recovery:reset:2cd06aca-eac0-4518-be44-5c5b35829ca9:'::text) AND (identifier < 'recovery:reset:2cd06aca-eac0-4518-be44-5c5b35829ca9;'::text))",
+                "Rows Removed by Index Recheck": 0,
+                "Filter": "(identifier ~~ 'recovery:reset:2cd06aca-eac0-4518-be44-5c5b35829ca9:%'::text)",
+                "Rows Removed by Filter": 0,
+                "Heap Fetches": 1,
+                "Shared Hit Blocks": 3,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              "Planning": {
+                "Shared Hit Blocks": 0,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              "Planning Time": 0.127,
+              "Triggers": [],
+              "Execution Time": 0.023
+            }
+          ]
+        },
+        "expiredSessions": {
+          "samples": 30,
+          "p50Ms": 0.8309950000000299,
+          "p95Ms": 1.1478839999999764,
+          "plan": [
+            {
+              "Plan": {
+                "Node Type": "Limit",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Startup Cost": 28.06,
+                "Total Cost": 47.32,
+                "Plan Rows": 200,
+                "Plan Width": 24,
+                "Actual Startup Time": 0.178,
+                "Actual Total Time": 0.205,
+                "Actual Rows": 200,
+                "Actual Loops": 1,
+                "Shared Hit Blocks": 7,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0,
+                "Plans": [
+                  {
+                    "Node Type": "Incremental Sort",
+                    "Parent Relationship": "Outer",
+                    "Parallel Aware": false,
+                    "Async Capable": false,
+                    "Startup Cost": 28.06,
+                    "Total Cost": 124.37,
+                    "Plan Rows": 1000,
+                    "Plan Width": 24,
+                    "Actual Startup Time": 0.178,
+                    "Actual Total Time": 0.189,
+                    "Actual Rows": 200,
+                    "Actual Loops": 1,
+                    "Sort Key": [
+                      "expires",
+                      "id"
+                    ],
+                    "Presorted Key": [
+                      "expires"
+                    ],
+                    "Full-sort Groups": {
+                      "Group Count": 1,
+                      "Sort Methods Used": [
+                        "quicksort"
+                      ],
+                      "Sort Space Memory": {
+                        "Average Sort Space Used": 29,
+                        "Peak Sort Space Used": 29
+                      }
+                    },
+                    "Pre-sorted Groups": {
+                      "Group Count": 1,
+                      "Sort Methods Used": [
+                        "quicksort"
+                      ],
+                      "Sort Space Memory": {
+                        "Average Sort Space Used": 39,
+                        "Peak Sort Space Used": 39
+                      }
+                    },
+                    "Shared Hit Blocks": 7,
+                    "Shared Read Blocks": 0,
+                    "Shared Dirtied Blocks": 0,
+                    "Shared Written Blocks": 0,
+                    "Local Hit Blocks": 0,
+                    "Local Read Blocks": 0,
+                    "Local Dirtied Blocks": 0,
+                    "Local Written Blocks": 0,
+                    "Temp Read Blocks": 0,
+                    "Temp Written Blocks": 0,
+                    "Plans": [
+                      {
+                        "Node Type": "Index Scan",
+                        "Parent Relationship": "Outer",
+                        "Parallel Aware": false,
+                        "Async Capable": false,
+                        "Scan Direction": "Forward",
+                        "Index Name": "Session_expires_idx",
+                        "Relation Name": "Session",
+                        "Alias": "Session",
+                        "Startup Cost": 0.15,
+                        "Total Cost": 71.96,
+                        "Plan Rows": 1000,
+                        "Plan Width": 24,
+                        "Actual Startup Time": 0.023,
+                        "Actual Total Time": 0.077,
+                        "Actual Rows": 209,
+                        "Actual Loops": 1,
+                        "Index Cond": "(expires < now())",
+                        "Rows Removed by Index Recheck": 0,
+                        "Shared Hit Blocks": 7,
+                        "Shared Read Blocks": 0,
+                        "Shared Dirtied Blocks": 0,
+                        "Shared Written Blocks": 0,
+                        "Local Hit Blocks": 0,
+                        "Local Read Blocks": 0,
+                        "Local Dirtied Blocks": 0,
+                        "Local Written Blocks": 0,
+                        "Temp Read Blocks": 0,
+                        "Temp Written Blocks": 0
+                      }
+                    ]
+                  }
+                ]
+              },
+              "Planning": {
+                "Shared Hit Blocks": 0,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              "Planning Time": 0.096,
+              "Triggers": [],
+              "Execution Time": 0.238
+            }
+          ]
+        }
+      }
+    }
+  }
+}

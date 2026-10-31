@@ -1,0 +1,2 @@
+export type BankDetails = { bank: string; accountNumber: string; accountName: string };
+export type ReturnCredit = { choice: "BANK_REFUND" | "CREDIT" | "REPLACEMENT"; id: string; approvedAmount: number; balance: number; reserved: number; spent: number; locked: number; refunded: number; refundDueAt: string; bankDetails: BankDetails | null; transfers: { id: string; state: string; amount: number }[] };

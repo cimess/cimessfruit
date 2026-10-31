@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-10-29T12:59:07.532Z",
+  "scope": "Disposable local PostgreSQL only; no application DB/provider connection",
+  "steps": [
+    {
+      "name": "migration chain on empty disposable database",
+      "passed": true
+    },
+    {
+      "name": "full suite including PostgreSQL and bounded-pool checks",
+      "passed": true,
+      "totals": [
+        "ℹ tests 187",
+        "ℹ pass 187",
+        "ℹ fail 0",
+        "ℹ skipped 0",
+        "ℹ duration_ms 14307.997145"
+      ]
+    },
+    {
+      "name": "representative synthetic local benchmarks",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "cleanup": "Temporary cluster stopped and removed"
+}

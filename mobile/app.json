@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "CimessFruit",
+    "slug": "cimessfruit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo/logo.png",
+    "scheme": "cimessfruit",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "icon": "./assets/logo/logo.png"
+    },
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "translucent": true,
+      "backgroundColor": "#00000000"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/logo/logo.png",
+        "backgroundImage": "./assets/logo/logo.png",
+        "monochromeImage": "./assets/logo/logo.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/logo/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#128A3A",
+          "image": "./assets/logo/logo.png",
+          "imageWidth": 120
+        }
+      ],
+      "expo-image",
+      "expo-secure-store",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose photos to attach as evidence to your CimessFruit support messages.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

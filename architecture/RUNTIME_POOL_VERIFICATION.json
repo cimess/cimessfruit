@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-28T14:33:27.937Z",
+  "scope": "Local warm mixed read-only workloads; equal per-pool limits; lifecycle suspension not simulated",
+  "config": {
+    "max": 3,
+    "connectionTimeoutMillis": 5000,
+    "idleTimeoutMillis": 5000,
+    "statementTimeoutMillis": 10000,
+    "queryTimeoutMillis": 12000,
+    "transactionTimeoutMillis": 5000
+  },
+  "results": [
+    {
+      "mode": "previous-adapter",
+      "concurrency": 1,
+      "operations": 64,
+      "errors": 0,
+      "p50Ms": 1.86,
+      "p95Ms": 3.94,
+      "elapsedMs": 125.94
+    },
+    {
+      "mode": "previous-adapter",
+      "concurrency": 8,
+      "operations": 64,
+      "errors": 0,
+      "p50Ms": 8.79,
+      "p95Ms": 13.81,
+      "elapsedMs": 72.86
+    },
+    {
+      "mode": "previous-adapter",
+      "concurrency": 16,
+      "operations": 64,
+      "errors": 0,
+      "p50Ms": 14.51,
+      "p95Ms": 20.79,
+      "elapsedMs": 59.57
+    },
+    {
+      "mode": "bounded-adapter",
+      "concurrency": 1,
+      "operations": 64,
+      "errors": 0,
+      "p50Ms": 2.85,
+      "p95Ms": 4.74,
+      "elapsedMs": 179.61
+    },
+    {
+      "mode": "bounded-adapter",
+      "concurrency": 8,
+      "operations": 64,
+      "errors": 0,
+      "p50Ms": 12.95,
+      "p95Ms": 17.56,
+      "elapsedMs": 102.01
+    },
+    {
+      "mode": "bounded-adapter",
+      "concurrency": 16,
+      "operations": 64,
+      "errors": 0,
+      "p50Ms": 22.44,
+      "p95Ms": 31.04,
+      "elapsedMs": 91.9
+    }
+  ],
+  "finalRuntimeStatus": {
+    "max": 3,
+    "total": 3,
+    "idle": 3,
+    "waiting": 0
+  }
+}

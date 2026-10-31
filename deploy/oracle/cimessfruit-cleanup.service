@@ -1,0 +1,16 @@
+[Unit]
+Description=Release expired CimessFruit reservations and credentials
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=cimessfruit
+Group=cimessfruit
+WorkingDirectory=/opt/cimessfruit/api
+EnvironmentFile=/etc/cimessfruit/api.env
+ExecStart=/usr/bin/node --import tsx scripts/maintenance.ts
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+UMask=0077

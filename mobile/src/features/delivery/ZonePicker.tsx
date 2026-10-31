@@ -1,0 +1,5 @@
+import { Pressable, Text, View } from "react-native";
+import type { DeliveryZone } from "./types";
+export default function ZonePicker({ zones, value, onChange, loading, error, reload }: { zones: DeliveryZone[]; value: string; onChange: (id: string) => void; loading: boolean; error: string; reload: () => void }) {
+  return <View className="my-3 gap-2"><Text className="font-bold">Delivery zone</Text>{loading ? <Text>Loading delivery zones…</Text> : error ? <Text accessibilityRole="alert">{error}</Text> : !zones.length ? <Text>No delivery zones are currently active.</Text> : zones.map(zone => <Pressable key={zone.id} accessibilityRole="radio" accessibilityState={{ checked: value === zone.id }} onPress={() => onChange(zone.id)} className={`rounded-xl border p-3 ${value === zone.id ? "border-green-700 bg-green-50" : "border-gray-200"}`}><Text className="font-bold">{zone.name} · ₦{zone.deliveryFee}</Text><Text>{zone.area}, {zone.state} · {zone.estimatedTime}</Text></Pressable>)}{!loading && <Pressable onPress={reload}><Text className="py-2 text-green-700">Refresh delivery zones</Text></Pressable>}</View>;
+}

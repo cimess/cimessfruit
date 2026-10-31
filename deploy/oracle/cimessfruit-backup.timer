@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily CimessFruit database backup
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+Unit=cimessfruit-backup.service
+[Install]
+WantedBy=timers.target

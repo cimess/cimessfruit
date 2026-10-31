@@ -1,0 +1,533 @@
+{
+  "measuredAtUtc": "2026-10-28T13:59:19.180Z",
+  "scope": "Local bounded read-only workload and synthetic queue/timeout probes; no CPU/RAM-constrained or deployed capacity claim",
+  "host": {
+    "logicalCpus": 8,
+    "cpuModel": "Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz",
+    "totalRamMiB": 15762.26,
+    "availableRamMiBAtEnd": 6331.22,
+    "swapTotalMiB": 4096,
+    "loadAverageAtEnd": [
+      1.09,
+      0.74,
+      0.7
+    ]
+  },
+  "currentDriverDefaults": {
+    "max": 10,
+    "idleTimeoutMillis": 10000,
+    "connectionTimeoutMillis": 0
+  },
+  "benchmarkSafety": {
+    "connectionTimeoutMillis": 3000,
+    "sessionStatementTimeoutMs": 2000,
+    "defaultReadOnly": true
+  },
+  "baseline": {
+    "settings": [
+      {
+        "name": "default_transaction_read_only",
+        "setting": "on",
+        "unit": null
+      },
+      {
+        "name": "effective_cache_size",
+        "setting": "524288",
+        "unit": "8kB"
+      },
+      {
+        "name": "idle_in_transaction_session_timeout",
+        "setting": "0",
+        "unit": "ms"
+      },
+      {
+        "name": "lock_timeout",
+        "setting": "0",
+        "unit": "ms"
+      },
+      {
+        "name": "maintenance_work_mem",
+        "setting": "65536",
+        "unit": "kB"
+      },
+      {
+        "name": "max_connections",
+        "setting": "100",
+        "unit": null
+      },
+      {
+        "name": "max_parallel_workers_per_gather",
+        "setting": "2",
+        "unit": null
+      },
+      {
+        "name": "reserved_connections",
+        "setting": "0",
+        "unit": null
+      },
+      {
+        "name": "server_version",
+        "setting": "16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)",
+        "unit": null
+      },
+      {
+        "name": "shared_buffers",
+        "setting": "16384",
+        "unit": "8kB"
+      },
+      {
+        "name": "statement_timeout",
+        "setting": "0",
+        "unit": "ms"
+      },
+      {
+        "name": "superuser_reserved_connections",
+        "setting": "3",
+        "unit": null
+      },
+      {
+        "name": "work_mem",
+        "setting": "4096",
+        "unit": "kB"
+      }
+    ],
+    "observerStartupDefaults": [
+      {
+        "name": "idle_in_transaction_session_timeout",
+        "reset_val": "0",
+        "unit": "ms"
+      },
+      {
+        "name": "lock_timeout",
+        "reset_val": "0",
+        "unit": "ms"
+      },
+      {
+        "name": "statement_timeout",
+        "reset_val": "0",
+        "unit": "ms"
+      }
+    ],
+    "sessionsIncludingProbe": [
+      {
+        "state": "active",
+        "count": 1
+      }
+    ],
+    "counts": {
+      "products": 14,
+      "options": 3,
+      "orders": 2,
+      "order_items": 3,
+      "payments": 2,
+      "conversations": 1,
+      "messages": 1,
+      "zones": 1,
+      "database_bytes": "8879127"
+    },
+    "cumulativeStats": {
+      "numbackends": 1,
+      "blks_read": "545",
+      "blks_hit": "630837",
+      "temp_files": "0",
+      "temp_bytes": "0",
+      "deadlocks": "0"
+    },
+    "ownBackendAllocatedBytes": "2063320"
+  },
+  "poolRuns": [
+    {
+      "max": 1,
+      "concurrency": 1,
+      "samples": 64,
+      "p50Ms": 1.54,
+      "p95Ms": 3.04,
+      "p99Ms": 5.56,
+      "elapsedMs": 109.39,
+      "completedPerSecondInThisBurst": 585.04,
+      "errors": {},
+      "sampledPeakWaiting": 1,
+      "connectionsAfter": 1,
+      "idleAfter": 1,
+      "probeCpuMs": 229.23,
+      "probeRssMiB": 183.79
+    },
+    {
+      "max": 1,
+      "concurrency": 4,
+      "samples": 64,
+      "p50Ms": 3.75,
+      "p95Ms": 5.6,
+      "p99Ms": 6.96,
+      "elapsedMs": 58.26,
+      "completedPerSecondInThisBurst": 1098.46,
+      "errors": {},
+      "sampledPeakWaiting": 4,
+      "connectionsAfter": 1,
+      "idleAfter": 1,
+      "probeCpuMs": 92.74,
+      "probeRssMiB": 154.66
+    },
+    {
+      "max": 1,
+      "concurrency": 8,
+      "samples": 64,
+      "p50Ms": 6.18,
+      "p95Ms": 11.51,
+      "p99Ms": 11.65,
+      "elapsedMs": 51.07,
+      "completedPerSecondInThisBurst": 1253.18,
+      "errors": {},
+      "sampledPeakWaiting": 9,
+      "connectionsAfter": 1,
+      "idleAfter": 1,
+      "probeCpuMs": 55.51,
+      "probeRssMiB": 156.66
+    },
+    {
+      "max": 1,
+      "concurrency": 16,
+      "samples": 64,
+      "p50Ms": 13.51,
+      "p95Ms": 17.8,
+      "p99Ms": 19.04,
+      "elapsedMs": 52.68,
+      "completedPerSecondInThisBurst": 1214.77,
+      "errors": {},
+      "sampledPeakWaiting": 19,
+      "connectionsAfter": 1,
+      "idleAfter": 1,
+      "probeCpuMs": 64.65,
+      "probeRssMiB": 162.41
+    },
+    {
+      "max": 3,
+      "concurrency": 1,
+      "samples": 64,
+      "p50Ms": 1.32,
+      "p95Ms": 2.16,
+      "p99Ms": 2.46,
+      "elapsedMs": 83.77,
+      "completedPerSecondInThisBurst": 763.98,
+      "errors": {},
+      "sampledPeakWaiting": 1,
+      "connectionsAfter": 3,
+      "idleAfter": 3,
+      "probeCpuMs": 181.33,
+      "probeRssMiB": 167.03
+    },
+    {
+      "max": 3,
+      "concurrency": 4,
+      "samples": 64,
+      "p50Ms": 2.19,
+      "p95Ms": 3.88,
+      "p99Ms": 4.27,
+      "elapsedMs": 34.33,
+      "completedPerSecondInThisBurst": 1864.31,
+      "errors": {},
+      "sampledPeakWaiting": 3,
+      "connectionsAfter": 3,
+      "idleAfter": 3,
+      "probeCpuMs": 39.66,
+      "probeRssMiB": 167.65
+    },
+    {
+      "max": 3,
+      "concurrency": 8,
+      "samples": 64,
+      "p50Ms": 4.84,
+      "p95Ms": 8.03,
+      "p99Ms": 8.76,
+      "elapsedMs": 37.75,
+      "completedPerSecondInThisBurst": 1695.49,
+      "errors": {},
+      "sampledPeakWaiting": 7,
+      "connectionsAfter": 3,
+      "idleAfter": 3,
+      "probeCpuMs": 45.53,
+      "probeRssMiB": 170.15
+    },
+    {
+      "max": 3,
+      "concurrency": 16,
+      "samples": 64,
+      "p50Ms": 8.86,
+      "p95Ms": 14.71,
+      "p99Ms": 15.66,
+      "elapsedMs": 37.98,
+      "completedPerSecondInThisBurst": 1685.3,
+      "errors": {},
+      "sampledPeakWaiting": 17,
+      "connectionsAfter": 3,
+      "idleAfter": 3,
+      "probeCpuMs": 47.52,
+      "probeRssMiB": 170.28
+    },
+    {
+      "max": 5,
+      "concurrency": 1,
+      "samples": 64,
+      "p50Ms": 0.89,
+      "p95Ms": 1.88,
+      "p99Ms": 2.48,
+      "elapsedMs": 61.88,
+      "completedPerSecondInThisBurst": 1034.28,
+      "errors": {},
+      "sampledPeakWaiting": 1,
+      "connectionsAfter": 5,
+      "idleAfter": 5,
+      "probeCpuMs": 46.88,
+      "probeRssMiB": 172.65
+    },
+    {
+      "max": 5,
+      "concurrency": 4,
+      "samples": 64,
+      "p50Ms": 2.01,
+      "p95Ms": 3.7,
+      "p99Ms": 5.33,
+      "elapsedMs": 35.64,
+      "completedPerSecondInThisBurst": 1795.94,
+      "errors": {},
+      "sampledPeakWaiting": 3,
+      "connectionsAfter": 5,
+      "idleAfter": 5,
+      "probeCpuMs": 42.91,
+      "probeRssMiB": 174.9
+    },
+    {
+      "max": 5,
+      "concurrency": 8,
+      "samples": 64,
+      "p50Ms": 4.43,
+      "p95Ms": 7.49,
+      "p99Ms": 7.74,
+      "elapsedMs": 36.59,
+      "completedPerSecondInThisBurst": 1748.9,
+      "errors": {},
+      "sampledPeakWaiting": 7,
+      "connectionsAfter": 5,
+      "idleAfter": 5,
+      "probeCpuMs": 41.82,
+      "probeRssMiB": 174.9
+    },
+    {
+      "max": 5,
+      "concurrency": 16,
+      "samples": 64,
+      "p50Ms": 8.19,
+      "p95Ms": 14.7,
+      "p99Ms": 15.12,
+      "elapsedMs": 36.01,
+      "completedPerSecondInThisBurst": 1777.33,
+      "errors": {},
+      "sampledPeakWaiting": 15,
+      "connectionsAfter": 5,
+      "idleAfter": 5,
+      "probeCpuMs": 51.45,
+      "probeRssMiB": 175.65
+    },
+    {
+      "max": 10,
+      "concurrency": 1,
+      "samples": 64,
+      "p50Ms": 1.04,
+      "p95Ms": 2.32,
+      "p99Ms": 4.36,
+      "elapsedMs": 73.9,
+      "completedPerSecondInThisBurst": 866.09,
+      "errors": {},
+      "sampledPeakWaiting": 1,
+      "connectionsAfter": 10,
+      "idleAfter": 10,
+      "probeCpuMs": 105.11,
+      "probeRssMiB": 173.79
+    },
+    {
+      "max": 10,
+      "concurrency": 4,
+      "samples": 64,
+      "p50Ms": 2.33,
+      "p95Ms": 4.27,
+      "p99Ms": 5.29,
+      "elapsedMs": 40.12,
+      "completedPerSecondInThisBurst": 1595.24,
+      "errors": {},
+      "sampledPeakWaiting": 3,
+      "connectionsAfter": 10,
+      "idleAfter": 10,
+      "probeCpuMs": 49.74,
+      "probeRssMiB": 173.79
+    },
+    {
+      "max": 10,
+      "concurrency": 8,
+      "samples": 64,
+      "p50Ms": 3.73,
+      "p95Ms": 9.6,
+      "p99Ms": 11.89,
+      "elapsedMs": 36.89,
+      "completedPerSecondInThisBurst": 1734.97,
+      "errors": {},
+      "sampledPeakWaiting": 7,
+      "connectionsAfter": 10,
+      "idleAfter": 10,
+      "probeCpuMs": 54.34,
+      "probeRssMiB": 174.29
+    },
+    {
+      "max": 10,
+      "concurrency": 16,
+      "samples": 64,
+      "p50Ms": 9.08,
+      "p95Ms": 10.98,
+      "p99Ms": 15.48,
+      "elapsedMs": 35.22,
+      "completedPerSecondInThisBurst": 1816.9,
+      "errors": {},
+      "sampledPeakWaiting": 15,
+      "connectionsAfter": 10,
+      "idleAfter": 10,
+      "probeCpuMs": 37.67,
+      "probeRssMiB": 180.42
+    }
+  ],
+  "queueDemonstration": [
+    {
+      "max": 1,
+      "concurrency": 16,
+      "operations": 32,
+      "artificialServiceMs": 20,
+      "elapsedMs": 659.37,
+      "acquisition": {
+        "samples": 32,
+        "p50Ms": 308.31,
+        "p95Ms": 308.93,
+        "p99Ms": 309.15
+      },
+      "total": {
+        "samples": 32,
+        "p50Ms": 328.83,
+        "p95Ms": 329.63,
+        "p99Ms": 329.85
+      }
+    },
+    {
+      "max": 3,
+      "concurrency": 16,
+      "operations": 32,
+      "artificialServiceMs": 20,
+      "elapsedMs": 226.72,
+      "acquisition": {
+        "samples": 32,
+        "p50Ms": 82.34,
+        "p95Ms": 102.8,
+        "p99Ms": 103.04
+      },
+      "total": {
+        "samples": 32,
+        "p50Ms": 102.88,
+        "p95Ms": 123.52,
+        "p99Ms": 123.88
+      }
+    },
+    {
+      "max": 5,
+      "concurrency": 16,
+      "operations": 32,
+      "artificialServiceMs": 20,
+      "elapsedMs": 144.77,
+      "acquisition": {
+        "samples": 32,
+        "p50Ms": 41.18,
+        "p95Ms": 61.64,
+        "p99Ms": 62.15
+      },
+      "total": {
+        "samples": 32,
+        "p50Ms": 61.9,
+        "p95Ms": 82.28,
+        "p99Ms": 82.72
+      }
+    },
+    {
+      "max": 10,
+      "concurrency": 16,
+      "operations": 32,
+      "artificialServiceMs": 20,
+      "elapsedMs": 82.67,
+      "acquisition": {
+        "samples": 32,
+        "p50Ms": 0.41,
+        "p95Ms": 21.11,
+        "p99Ms": 21.16
+      },
+      "total": {
+        "samples": 32,
+        "p50Ms": 21.35,
+        "p95Ms": 41.67,
+        "p99Ms": 41.76
+      }
+    }
+  ],
+  "timeoutProbes": [
+    {
+      "connectionTimeoutMillis": 0,
+      "result": "acquired_after_release",
+      "heldMs": 250,
+      "outcomeElapsedMs": 250.77
+    },
+    {
+      "connectionTimeoutMillis": 100,
+      "result": "acquisition_timeout",
+      "heldMs": 250,
+      "outcomeElapsedMs": 99.84
+    },
+    {
+      "statementTimeoutMs": 0,
+      "querySleepMs": 250,
+      "outcome": "completed",
+      "elapsedMs": 251.24
+    },
+    {
+      "statementTimeoutMs": 100,
+      "querySleepMs": 250,
+      "outcome": "57014",
+      "elapsedMs": 100.81
+    }
+  ],
+  "bcryptRuns": [
+    {
+      "concurrency": 1,
+      "samples": 8,
+      "p50Ms": 339.44,
+      "p95Ms": 344.79,
+      "p99Ms": 344.79,
+      "elapsedMs": 2727.57,
+      "probeCpuMs": 2730.38,
+      "cost": 12
+    },
+    {
+      "concurrency": 4,
+      "samples": 8,
+      "p50Ms": 1361.02,
+      "p95Ms": 1361.96,
+      "p99Ms": 1361.96,
+      "elapsedMs": 2723.67,
+      "probeCpuMs": 2728.46,
+      "cost": 12
+    },
+    {
+      "concurrency": 8,
+      "samples": 8,
+      "p50Ms": 2322.6,
+      "p95Ms": 2726.51,
+      "p99Ms": 2726.51,
+      "elapsedMs": 2726.75,
+      "probeCpuMs": 2720.1,
+      "cost": 12
+    }
+  ],
+  "probePeakRssMiB": 337.3
+}

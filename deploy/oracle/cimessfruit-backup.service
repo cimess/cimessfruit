@@ -1,0 +1,16 @@
+[Unit]
+Description=Back up the CimessFruit PostgreSQL database
+After=postgresql.service
+[Service]
+Type=oneshot
+User=cimessfruit
+Group=cimessfruit
+WorkingDirectory=/opt/cimessfruit/api
+EnvironmentFile=/etc/cimessfruit/api.env
+Environment=BACKUP_DIR=/var/backups/cimessfruit
+ExecStart=/usr/bin/node scripts/backup.mjs
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+UMask=0077
