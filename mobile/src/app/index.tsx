@@ -57,7 +57,7 @@ export default function Index() {
           {/* Logo mark */}
           <View className="mb-3 h-[86px] w-[86px] items-center justify-center overflow-hidden rounded-[28px] bg-white/95">
             <Image
-              source={require("@/assets/logo/logo-ui.webp")}
+              source={require("@/assets/logo/logo.png")}
               contentFit="contain"
               style={{ width: 78, height: 78 }}
             />

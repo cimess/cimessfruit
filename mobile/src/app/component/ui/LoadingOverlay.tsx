@@ -16,7 +16,7 @@ export default function LoadingOverlay() {
       <View className="items-center rounded-[28px] bg-white px-7 py-6">
         <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-[22px] bg-[#FAFBF7]">
           <Image
-            source={require("@/assets/logo/logo-ui.webp")}
+            source={require("@/assets/logo/logo.png")}
             contentFit="contain"
             style={{ width: 54, height: 54 }}
           />

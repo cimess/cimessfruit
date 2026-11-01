@@ -17,10 +17,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/logo/logo.png",
-        "backgroundImage": "./assets/logo/logo.png",
-        "monochromeImage": "./assets/logo/logo.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/logo/logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -35,7 +33,8 @@
         {
           "backgroundColor": "#128A3A",
           "image": "./assets/logo/logo.png",
-          "imageWidth": 120
+          "imageWidth": 120,
+          "resizeMode": "contain"
         }
       ],
       "expo-image",

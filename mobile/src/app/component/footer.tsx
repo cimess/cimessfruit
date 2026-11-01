@@ -98,7 +98,7 @@ export default function Footer({
         <View className="flex-row items-center">
           <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white">
             <Image
-              source={require("@/assets/logo/logo-ui.webp")}
+              source={require("@/assets/logo/logo.png")}
               contentFit="contain"
               style={{ width: 44, height: 44 }}
             />
