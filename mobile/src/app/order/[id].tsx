@@ -1,10 +1,10 @@
+import { useState } from "react";
 import ReturnSummary from "@/features/returns/ReturnSummary";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Alert, Platform, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Alert, Modal, Platform, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 
 import {
   getOrderStatusStyle,
@@ -37,6 +37,11 @@ export default function OrderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { refresh, refreshing, error } = useOrderPolling({ id, enabled: !!id });
   const order = useOrderStore((state) => state.orders[id]);
+
+  const [disputeModalVisible, setDisputeModalVisible] = useState(false);
+  const [disputeCategory, setDisputeCategory] = useState("SPOILT");
+  const [disputeReason, setDisputeReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   if (!order) {
     return (
@@ -276,6 +281,176 @@ export default function OrderDetails() {
             </Text>
           </View>
         </View>
+
+        {order.status === "dispatched" && (
+          <View className="mt-4 gap-3">
+            <Text className="text-center text-xs font-semibold text-gray-500">
+              Has your package arrived? Please verify your delivery below.
+            </Text>
+            <View className="flex-row gap-3">
+              <Pressable
+                disabled={submitting}
+                onPress={() => {
+                  Alert.alert(
+                    "Confirm Delivery",
+                    "Are you sure you have received your order in good condition?",
+                    [
+                      { text: "Not yet", style: "cancel" },
+                      {
+                        text: "Yes, I Received It",
+                        onPress: async () => {
+                          try {
+                            setSubmitting(true);
+                            await useOrderStore.getState().confirmDelivery(order.id);
+                            Alert.alert("Success", "Delivery confirmed! Thank you.");
+                          } catch (err) {
+                            Alert.alert("Error", err instanceof Error ? err.message : "Failed to confirm delivery.");
+                          } finally {
+                            setSubmitting(false);
+                          }
+                        },
+                      },
+                    ]
+                  );
+                }}
+                className="flex-1 flex-row items-center justify-center rounded-2xl py-3.5 px-4 shadow-sm"
+                style={{ backgroundColor: submitting ? "#34D399" : "#128A3A" }}
+              >
+                <Ionicons name="checkmark-circle-outline" size={20} color="#FFFFFF" />
+                <Text className="ml-2 font-bold text-white text-base">Accept Order</Text>
+              </Pressable>
+
+              <Pressable
+                disabled={submitting}
+                onPress={() => setDisputeModalVisible(true)}
+                className="flex-1 flex-row items-center justify-center rounded-2xl border border-red-200 bg-red-50 py-3.5 px-4 active:bg-red-100"
+              >
+                <Ionicons name="close-circle-outline" size={20} color="#DC2626" />
+                <Text className="ml-2 font-bold text-red-600 text-base">Reject Order</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
+        {order.status === "resolved" && (
+          <View className="mt-4 rounded-2xl bg-amber-50 p-4 border border-amber-200">
+            <View className="flex-row items-center gap-2">
+              <Ionicons name="alert-circle" size={20} color="#D97706" />
+              <Text className="font-extrabold text-amber-900 text-sm">Dispute / Issue Reported</Text>
+            </View>
+            <Text className="mt-1 text-xs text-amber-800 font-medium">
+              You reported an issue with this order. Our admin team has received it and is reviewing the dispute.
+            </Text>
+            <Pressable
+              onPress={() => router.push({ pathname: "/chat", params: { orderId: order.id } })}
+              className="mt-3 flex-row items-center"
+            >
+              <Text className="font-bold text-green-700 text-xs">View Dispute Chat & Support →</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <Modal
+          visible={disputeModalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setDisputeModalVisible(false)}
+        >
+          <View className="flex-1 justify-end bg-black/50">
+            <View className="rounded-t-[32px] bg-white p-6 pb-10">
+              <View className="flex-row items-center justify-between pb-3">
+                <Text className="text-lg font-extrabold text-gray-900">Report an Issue / Reject</Text>
+                <Pressable onPress={() => setDisputeModalVisible(false)} className="p-1">
+                  <Ionicons name="close" size={24} color="#6B7280" />
+                </Pressable>
+              </View>
+
+              <Text className="text-xs font-semibold text-gray-500 mb-4">
+                What went wrong with your order? Our support and admin team will investigate immediately.
+              </Text>
+
+              <Text className="text-xs font-bold text-gray-700 mb-2">Category</Text>
+              <View className="flex-row flex-wrap gap-2 mb-4">
+                {[
+                  { key: "SPOILT", label: "Spoilt / Damaged Fruit" },
+                  { key: "MISSING_ITEMS", label: "Missing Items" },
+                  { key: "WRONG_ITEMS", label: "Wrong Items" },
+                  { key: "OTHER", label: "Other Problem" },
+                ].map((cat) => (
+                  <Pressable
+                    key={cat.key}
+                    onPress={() => setDisputeCategory(cat.key)}
+                    className={`rounded-full px-3.5 py-1.5 border ${
+                      disputeCategory === cat.key
+                        ? "border-[#128A3A] bg-[#E8F5EC]"
+                        : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <Text
+                      className={`text-xs font-bold ${
+                        disputeCategory === cat.key ? "text-[#128A3A]" : "text-gray-600"
+                      }`}
+                    >
+                      {cat.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              <Text className="text-xs font-bold text-gray-700 mb-2">Details</Text>
+              <TextInput
+                value={disputeReason}
+                onChangeText={setDisputeReason}
+                placeholder="Describe what happened (e.g. damaged fruits, order missing...)"
+                multiline
+                numberOfLines={3}
+                className="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 mb-5"
+                textAlignVertical="top"
+              />
+
+              <View className="flex-row gap-3">
+                <Pressable
+                  onPress={() => setDisputeModalVisible(false)}
+                  className="flex-1 items-center justify-center rounded-2xl border border-gray-200 py-3.5"
+                >
+                  <Text className="font-bold text-gray-700">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  disabled={submitting || disputeReason.trim().length < 3}
+                  onPress={async () => {
+                    try {
+                      setSubmitting(true);
+                      await useOrderStore.getState().reportIssue(order.id, disputeReason, disputeCategory);
+                      setDisputeModalVisible(false);
+                      Alert.alert(
+                        "Dispute Submitted",
+                        "Your complaint has been submitted. The admin has been notified and will resolve or credit you.",
+                        [
+                          {
+                            text: "Open Support Chat",
+                            onPress: () => router.push({ pathname: "/chat", params: { orderId: order.id } }),
+                          },
+                          { text: "Done", style: "cancel" },
+                        ]
+                      );
+                    } catch (err) {
+                      Alert.alert("Submission Failed", err instanceof Error ? err.message : "Could not submit issue.");
+                    } finally {
+                      setSubmitting(false);
+                    }
+                  }}
+                  className={`flex-1 items-center justify-center rounded-2xl py-3.5 ${
+                    submitting || disputeReason.trim().length < 3
+                      ? "bg-red-300"
+                      : "bg-red-600 active:bg-red-700"
+                  }`}
+                >
+                  <Text className="font-bold text-white">Submit Report</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </ScrollView>
   );

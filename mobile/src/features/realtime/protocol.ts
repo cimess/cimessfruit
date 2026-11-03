@@ -74,3 +74,8 @@ export function waitForRetry(milliseconds: number, signal: AbortSignal) {
     if (signal.aborted) finish();
   });
 }
+
+// Do not reset on ready: a stream that immediately closes must still back off.
+export function retryDelay(failures: number, random = Math.random()) {
+  return Math.min(60000, 5000 * 2 ** Math.min(failures, 4)) * (1 + random * 0.2);
+}

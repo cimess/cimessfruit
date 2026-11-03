@@ -25,3 +25,9 @@ export async function reportPayment(id: string) {
   pending = undefined;
   return result;
 }
+export async function confirmDelivery(id: string) {
+  return mapOrder(await apiRequest<Result>(`/api/orders/${id}`, { method: "POST", body: JSON.stringify({ action: "confirm_delivery" }) }));
+}
+export async function reportIssue(id: string, disputeReason: string, disputeCategory: string) {
+  return mapOrder(await apiRequest<Result>(`/api/orders/${id}`, { method: "POST", body: JSON.stringify({ action: "dispute", disputeReason, disputeCategory }) }));
+}

@@ -176,7 +176,7 @@ export default function Login() {
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
+      <Pressable onPress={() => router.push("/recover")}><Text className="p-4 font-bold text-green-700">Reactivate a disabled account</Text></Pressable></ScrollView>
     </KeyboardAvoidingView>
   );
 }

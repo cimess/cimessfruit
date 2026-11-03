@@ -19,12 +19,12 @@
         "text": "The store and delivery personnel use your delivery details to fulfil orders. Hosting and database services process application data; Resend handles account emails; Cloudinary hosts product photos. Google or Apple map services process map and address lookups. We do not ask you to send bank passwords, card PINs or login credentials in support messages."
       },
       {
-        "title": "Retention and account deletion",
-        "text": "Account data is kept while your account is active. You can request and confirm deletion through the Delete account page. Deletion removes your profile, saved address and coordinates, sign-in credentials, sessions and support messages, and removes the account link and delivery details from sales records. Sales records remain for store accounting. Active orders and payment reviews must be resolved first. Backup copies expire according to the store\u2019s backup schedule; contact support for retention questions."
+        "title": "Retention and account disabling",
+        "text": "You can disable your account through the Disable account page. Disabling ends your sessions and prevents sign-in. Your profile, orders, payment and refund records, and support history remain linked to your account for continuity and store accounting. Existing orders and financial obligations remain in place. You can request a secure reactivation link from sign-in or signup to restore access to the same account. Backup copies expire according to the store\u2019s backup schedule; contact support for retention questions."
       },
       {
         "title": "Your choices",
-        "text": "You can update your profile, change location permissions in device settings, request account deletion, or contact support about access or correction of your data. We use session storage to keep you signed in and local cart storage to remember your basket."
+        "text": "You can update your profile, change location permissions in device settings, request account disabling, or contact support about access or correction of your data. We use session storage to keep you signed in and local cart storage to remember your basket."
       }
     ]
   },

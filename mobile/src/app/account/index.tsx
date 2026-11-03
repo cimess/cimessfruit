@@ -1,7 +1,7 @@
 import NotificationSettings from "@/features/notifications/NotificationSettings";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { Stack, useRouter, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   Modal,
   Platform,
@@ -58,9 +58,9 @@ export default function Account() {
     phoneNumber: "",
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+  useFocusEffect(useCallback(() => {
+    void loadProfile();
+  }, [loadProfile]));
 
   const openAddressModal = () => {
     if (profile) {
@@ -174,6 +174,7 @@ export default function Account() {
                 Edit profile
               </Text>
             </Pressable>
+            {profile && !profile.emailVerified && <Pressable accessibilityRole="button" onPress={() => router.push("/verify-email")} className="mt-2 items-center rounded-[22px] bg-green-50 px-4 py-3"><Text className="font-bold text-green-700">Verify email</Text></Pressable>}
           </View>
 
           <SettingsSection title="Delivery">
@@ -251,7 +252,7 @@ export default function Account() {
               Sign out
             </Text>
           </Pressable>
-            <Pressable onPress={() => router.push("/delete-account")}><Text className="py-4 font-bold text-red-700">Delete my account</Text></Pressable>
+            <Pressable onPress={() => router.push("/delete-account")}><Text className="py-4 font-bold text-red-700">Disable my account</Text></Pressable>
         </View>
       </ScrollView>
 

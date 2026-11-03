@@ -1,4 +1,4 @@
-export const ORDER_REFRESH_MS = 15_000;
+export const ORDER_STALE_MS = 15_000;
 export const ORDER_LIST = "list";
 
 // Framework-independent so request races, cancellation and deduplication can be tested.
@@ -22,7 +22,7 @@ export class OrderReadCoordinator<T extends { id: string }> {
     if (existing) return existing.promise;
     const now = this.deps.now ?? Date.now;
     const last = this.fresh.get(key);
-    if (!force && last !== undefined && now() - last < ORDER_REFRESH_MS) return Promise.resolve();
+    if (!force && last !== undefined && now() - last < ORDER_STALE_MS) return Promise.resolve();
     const generation = this.generation, sequence = ++this.sequence;
     const controller = new AbortController();
     const current = () => generation === this.generation && !controller.signal.aborted;
@@ -72,36 +72,20 @@ export class OrderReadCoordinator<T extends { id: string }> {
   reset() { this.invalidate(); this.applied.clear(); }
 }
 
-export class OrderPoller {
-  private interval = ORDER_REFRESH_MS;
-  setStreaming(healthy: boolean) {
-    const interval = healthy ? 60000 : ORDER_REFRESH_MS;
-    if (this.interval === interval) return;
-    this.interval = interval;
-    if (this.timer !== undefined) (this.deps.unschedule ?? clearTimeout)(this.timer);
-    this.timer = undefined; this.schedule();
-  }
-  refreshSubscribed() { if (this.active) for (const key of this.subscriptions.keys()) void this.deps.refresh(key, true); }
+// No background polling: reads are triggered by subscribers, foregrounding,
+// explicit refreshes, and SSE invalidations.
+export class OrderSubscriptions {
   private active = false;
   private subscriptions = new Map<string, number>();
-  private timer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private readonly deps: {
     refresh: (key: string, force: boolean) => Promise<void>;
     cancel: (key: string) => void;
     pause: () => void;
-    schedule?: typeof setTimeout;
-    unschedule?: typeof clearTimeout;
   }) {}
 
-  private schedule() {
-    if (this.timer !== undefined || !this.active || !this.subscriptions.size) return;
-    this.timer = (this.deps.schedule ?? setTimeout)(() => {
-      this.timer = undefined;
-      if (!this.active) return;
-      for (const key of this.subscriptions.keys()) void this.deps.refresh(key, true);
-      this.schedule();
-    }, this.interval);
+  refreshSubscribed() {
+    if (this.active) for (const key of this.subscriptions.keys()) void this.deps.refresh(key, true);
   }
 
   setActive(active: boolean) {
@@ -109,10 +93,7 @@ export class OrderPoller {
     this.active = active;
     if (active) {
       for (const key of this.subscriptions.keys()) void this.deps.refresh(key, false);
-      this.schedule();
     } else {
-      if (this.timer !== undefined) (this.deps.unschedule ?? clearTimeout)(this.timer);
-      this.timer = undefined;
       this.deps.pause();
     }
   }
@@ -121,7 +102,6 @@ export class OrderPoller {
     const count = this.subscriptions.get(key) ?? 0;
     this.subscriptions.set(key, count + 1);
     if (this.active && !count) void this.deps.refresh(key, false);
-    this.schedule();
     let subscribed = true;
     return () => {
       if (!subscribed) return;
@@ -129,10 +109,6 @@ export class OrderPoller {
       const remaining = (this.subscriptions.get(key) ?? 1) - 1;
       if (remaining) this.subscriptions.set(key, remaining);
       else { this.subscriptions.delete(key); this.deps.cancel(key); }
-      if (!this.subscriptions.size && this.timer !== undefined) {
-        (this.deps.unschedule ?? clearTimeout)(this.timer);
-        this.timer = undefined;
-      }
     };
   }
 }

@@ -46,7 +46,7 @@ export default function RootLayout() {
       return;
     }
 
-    if (["/recover", "/privacy", "/delete-account"].includes(pathname) || pathname.startsWith("/policies/")) return;
+    if (["/recover", "/verify-email", "/privacy", "/delete-account"].includes(pathname) || pathname.startsWith("/policies/")) return;
 
     const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 

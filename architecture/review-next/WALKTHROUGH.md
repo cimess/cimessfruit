@@ -38,7 +38,7 @@ These operate on test data only. No money was transferred and no application ord
 
 ## 4. Foreground realtime
 
-Read api/features/realtime/README.md, then bus.ts → publication.ts → stream.ts → runtime.ts. Native code lives in mobile/src/features/realtime/.
+Read api/features/realtime/README.md, then bus.ts → publication.ts → stream.ts. Native code lives in mobile/src/features/realtime/.
 
 One authenticated foreground stream carries order/catalogue change hints. Redis Pub/Sub connects separate instances. Committed changes leave a durable signal; failed publication retains it. Subscribe acknowledgment precedes ready; clients then cancel stale reads and fetch authoritative state. Session rechecks, owner filtering, heartbeats, bounded buffers, connection caps, abort cleanup and planned rotation are implemented.
 

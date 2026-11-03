@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ORDER_LIST, ORDER_REFRESH_MS, OrderPoller, OrderReadCoordinator } from "../src/features/order/readCoordinator";
+import { ORDER_LIST, ORDER_STALE_MS, OrderSubscriptions, OrderReadCoordinator } from "../src/features/order/readCoordinator";
 import { mergeOrders } from "../src/features/order/mergeOrders";
 import type { Order } from "../src/features/order/types";
 
@@ -42,10 +42,10 @@ test("overlapping automatic/manual list refreshes share one request and stale re
   assert.equal(f.requests.length, 1);
   f.requests[0].result.resolve({ owner: "owner", orders: [{ id: "one", status: "pending" }] });
   await first;
-  f.time(ORDER_REFRESH_MS - 1);
+  f.time(ORDER_STALE_MS - 1);
   await f.reads.refresh();
   assert.equal(f.requests.length, 1);
-  f.time(ORDER_REFRESH_MS);
+  f.time(ORDER_STALE_MS);
   const stale = f.reads.refresh();
   await flush();
   assert.equal(f.requests.length, 2);
@@ -143,29 +143,28 @@ class Clock {
   }
 }
 
-test("notifications and a focused list share one timer/request stream; hidden consumers stop", async () => {
-  const clock = new Clock(), calls: string[] = [];
-  const poller = new OrderPoller({
+test("idle subscribers never poll; changes refresh once and hidden consumers stop", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const calls: string[] = [];
+  const subscriptions = new OrderSubscriptions({
     refresh: async key => { calls.push(key); }, cancel: () => {}, pause: () => {},
-    schedule: clock.schedule, unschedule: clock.unschedule,
   });
-  poller.setActive(true);
-  const notifications = poller.subscribe(ORDER_LIST), screen = poller.subscribe(ORDER_LIST);
-  assert.equal(clock.tasks.size, 1);
-  await clock.advance(60_000);
-  assert.equal(calls.length, 5); // Initial + four ticks, instead of two separate streams.
-  screen(); await clock.advance(15_000);
-  assert.equal(calls.length, 6); // Notifications still intentionally active.
-  notifications(); await clock.advance(60_000);
-  assert.equal(calls.length, 6);
-  assert.equal(clock.tasks.size, 0);
+  subscriptions.setActive(true);
+  const notifications = subscriptions.subscribe(ORDER_LIST), screen = subscriptions.subscribe(ORDER_LIST);
+  assert.equal(calls.length, 1);
+  t.mock.timers.tick(10 * 60_000);
+  assert.equal(calls.length, 1, "ten idle minutes must not trigger reads");
+  subscriptions.refreshSubscribed();
+  assert.equal(calls.length, 2, "one change refreshes shared subscribers once");
+  screen(); notifications();
+  subscriptions.refreshSubscribed();
+  assert.equal(calls.length, 2);
 });
 
 test("background/logout abort in-flight work, stop timers and foreground resumes stale work", async () => {
   const f = fixture(), clock = new Clock();
-  const poller = new OrderPoller({ refresh: (key, force) => f.reads.refresh(key, force),
+  const poller = new OrderSubscriptions({ refresh: (key, force) => f.reads.refresh(key, force),
     cancel: key => f.reads.cancel(key), pause: () => f.reads.pause(),
-    schedule: clock.schedule, unschedule: clock.unschedule,
   });
   const unwatch = poller.subscribe(ORDER_LIST);
   await flush(); assert.equal(f.requests.length, 0); // Logged out/inactive.
@@ -185,9 +184,8 @@ test("background/logout abort in-flight work, stop timers and foreground resumes
 
 test("slow requests never overlap and detail unsubscribe does not cancel the shared list", async () => {
   const f = fixture(), clock = new Clock();
-  const poller = new OrderPoller({ refresh: (key, force) => f.reads.refresh(key, force),
+  const poller = new OrderSubscriptions({ refresh: (key, force) => f.reads.refresh(key, force),
     cancel: key => f.reads.cancel(key), pause: () => f.reads.pause(),
-    schedule: clock.schedule, unschedule: clock.unschedule,
   });
   poller.setActive(true);
   const list = poller.subscribe(ORDER_LIST), detail = poller.subscribe("one");
@@ -218,13 +216,14 @@ test("list merges preserve unchanged payment detail and invalidate it on status/
   assert.equal(mergeOrders(current, [order({ updatedAt: "2026-10-28T00:01:00Z" })]).one.eligibility, undefined);
   assert.equal(mergeOrders(current, [order({ account: null, eligibility: { eligible: false, issues: ["Expired"] } })]).one.account, null);
 });
-test("healthy streaming slows reconciliation and stream failure restores the existing polling interval", async () => {
-  const clock = new Clock(); let calls = 0;
-  const poller = new OrderPoller({ refresh: async () => { calls++; }, cancel: () => {}, pause: () => {}, schedule: clock.schedule, unschedule: clock.unschedule });
-  poller.setActive(true); const unwatch = poller.subscribe(ORDER_LIST); assert.equal(calls, 1);
-  poller.setStreaming(true); await clock.advance(15000); assert.equal(calls, 1);
-  await clock.advance(45000); assert.equal(calls, 2);
-  poller.refreshSubscribed(); assert.equal(calls, 3);
-  poller.setStreaming(false); await clock.advance(15000); assert.equal(calls, 4);
-  unwatch(); poller.setActive(false); assert.equal(clock.tasks.size, 0);
+test("background subscribers ignore change hints until foregrounded", () => {
+  let calls = 0;
+  const subscriptions = new OrderSubscriptions({ refresh: async () => { calls++; }, cancel: () => {}, pause: () => {} });
+  const unwatch = subscriptions.subscribe(ORDER_LIST);
+  subscriptions.refreshSubscribed(); assert.equal(calls, 0);
+  subscriptions.setActive(true); assert.equal(calls, 1);
+  subscriptions.setActive(false);
+  subscriptions.refreshSubscribed(); assert.equal(calls, 1);
+  subscriptions.setActive(true); assert.equal(calls, 2);
+  unwatch(); subscriptions.setActive(false);
 });

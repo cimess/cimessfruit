@@ -9,6 +9,6 @@ export default function PolicyPage() {
     <Stack.Screen options={{ title: content?.title ?? "Policy" }} />
     <Text className="mb-5 text-2xl font-bold">{content?.title ?? "Policy not found"}</Text>
     {content?.sections.map(section => <Text key={section.title} className="mb-5 leading-6"><Text className="font-bold">{section.title}{"\n"}</Text>{section.text}</Text>)}
-    <Pressable onPress={() => router.push("/delete-account")}><Text className="py-4 font-bold text-green-700">Delete my account</Text></Pressable>
+    <Pressable onPress={() => router.push("/delete-account")}><Text className="py-4 font-bold text-green-700">Disable my account</Text></Pressable>
   </ScrollView>;
 }

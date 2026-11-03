@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { createOrder, fetchOrders, fetchOrder, reportPayment } from "./service";
 import type { Order, OrderDraft } from "./types";
 import { mergeOrders } from "./mergeOrders";
-import { ORDER_LIST, OrderPoller, OrderReadCoordinator } from "./readCoordinator";
+import { ORDER_LIST, OrderSubscriptions, OrderReadCoordinator } from "./readCoordinator";
 
 type OrderState = {
   orders: Record<string, Order>;
@@ -16,6 +16,8 @@ type OrderState = {
   placeOrder: (draft: OrderDraft) => Promise<Order>;
   refresh: (id?: string, force?: boolean) => Promise<void>;
   report: (id: string) => Promise<Order>;
+  confirmDelivery: (id: string) => Promise<Order>;
+  reportIssue: (id: string, reason: string, category: string) => Promise<Order>;
   getOrder: (orderId: string) => Order | undefined;
   clearError: () => void;
   reset: () => void;
@@ -41,7 +43,7 @@ export const orderReads = new OrderReadCoordinator<Order>({
   })),
 });
 
-export const orderPolling = new OrderPoller({
+export const orderSubscriptions = new OrderSubscriptions({
   refresh: (key, force) => orderReads.refresh(key, force),
   cancel: key => orderReads.cancel(key),
   pause: () => orderReads.pause(),
@@ -88,6 +90,38 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     if (ownerGeneration !== generation) throw Error("Session changed. Please retry.");
     orderReads.invalidate();
     const order = await reportPayment(id);
+    await commitAuthenticatedUser(owner, () => {
+      if (ownerGeneration !== generation) throw Error("Session changed. Please retry.");
+      orderReads.invalidate();
+      orderReads.markFresh(order.id);
+      set(state => ({ orders: mergeOrders(state.orders, [order]) }));
+    });
+    return order;
+  },
+  confirmDelivery: async id => {
+    const generation = ownerGeneration;
+    const owner = ((await getSessionSnapshot()).session?.user as { id?: string })?.id;
+    if (!owner) throw Error("Please sign in.");
+    if (ownerGeneration !== generation) throw Error("Session changed. Please retry.");
+    orderReads.invalidate();
+    const { confirmDelivery } = await import("./service");
+    const order = await confirmDelivery(id);
+    await commitAuthenticatedUser(owner, () => {
+      if (ownerGeneration !== generation) throw Error("Session changed. Please retry.");
+      orderReads.invalidate();
+      orderReads.markFresh(order.id);
+      set(state => ({ orders: mergeOrders(state.orders, [order]) }));
+    });
+    return order;
+  },
+  reportIssue: async (id, reason, category) => {
+    const generation = ownerGeneration;
+    const owner = ((await getSessionSnapshot()).session?.user as { id?: string })?.id;
+    if (!owner) throw Error("Please sign in.");
+    if (ownerGeneration !== generation) throw Error("Session changed. Please retry.");
+    orderReads.invalidate();
+    const { reportIssue } = await import("./service");
+    const order = await reportIssue(id, reason, category);
     await commitAuthenticatedUser(owner, () => {
       if (ownerGeneration !== generation) throw Error("Session changed. Please retry.");
       orderReads.invalidate();

@@ -3,6 +3,18 @@ import { Pressable, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { apiRequest } from "@/lib/api";
 import type { CreditChoice, Choice } from "./types";
+function formatRemainingTime(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes.toString().padStart(2, "0")}m ${seconds.toString().padStart(2, "0")}s`;
+  }
+  return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+}
+
 export default function ResolutionChoice({ credit, serverTime, refresh }: { credit: CreditChoice; serverTime: string; refresh: () => void }) {
   const [now, setNow] = useState(Date.now), [offset] = useState(() => Date.parse(serverTime) - Date.now());
   const [error, setError] = useState(""), [busy, setBusy] = useState(false); const lock = useRef(false);
@@ -16,5 +28,5 @@ export default function ResolutionChoice({ credit, serverTime, refresh }: { cred
     catch (error) { setError(error instanceof Error ? error.message : "Unable to save choice"); }
     finally { lock.current = false; setBusy(false); }
   }
-  return <View className="my-3 rounded-2xl bg-green-50 p-4"><Text className="font-bold">Resolution: {(remaining ? credit.choice === "CREDIT" ? "Buy again" : credit.choice.replaceAll("_", " ") : "BANK REFUND")}</Text><Text>{remaining ? `${Math.ceil(remaining / 1000)} seconds to buy again or place a replacement.` : "The buying window is closed. Any unspent balance is due for refund."} Buy again is the default; unused money is refunded after 20 minutes.</Text><View className="mt-2 gap-2">{(["BANK_REFUND", "CREDIT", "REPLACEMENT"] as Choice[]).map(choice => <Pressable key={choice} disabled={busy || !remaining || credit.locked > 0 || credit.choice === choice} onPress={() => void choose(choice)}><Text className={`rounded-xl p-2 font-bold ${credit.choice === choice ? "bg-green-200" : "bg-white"}`}>{choice === "BANK_REFUND" ? "Bank refund" : choice === "CREDIT" ? "Buy again" : "Replacement"}</Text></Pressable>)}</View>{!!error && <Text accessibilityRole="alert">{error}</Text>}<Text className="mt-2 text-xs">Use approved credit or place a replacement within 20 minutes; any unused balance then goes to refund. Save bank details on your source order for a bank refund.</Text></View>;
+  return <View className="my-3 rounded-2xl bg-green-50 p-4"><Text className="font-bold">Resolution: {(remaining ? credit.choice === "CREDIT" ? "Buy again" : credit.choice.replaceAll("_", " ") : "BANK REFUND")}</Text><Text>{remaining ? `⏳ ${formatRemainingTime(remaining)} remaining to buy again or place a replacement.` : "The buying window is closed. Any unspent balance is due for refund."} Buy again is the default; unused money is refunded after 20 minutes.</Text><View className="mt-2 gap-2">{(["BANK_REFUND", "CREDIT", "REPLACEMENT"] as Choice[]).map(choice => <Pressable key={choice} disabled={busy || !remaining || credit.locked > 0 || credit.choice === choice} onPress={() => void choose(choice)}><Text className={`rounded-xl p-2 font-bold ${credit.choice === choice ? "bg-green-200" : "bg-white"}`}>{choice === "BANK_REFUND" ? "Bank refund" : choice === "CREDIT" ? "Buy again" : "Replacement"}</Text></Pressable>)}</View>{!!error && <Text accessibilityRole="alert">{error}</Text>}<Text className="mt-2 text-xs">Use approved credit or place a replacement within 20 minutes; any unused balance then goes to refund. Save bank details on your source order for a bank refund.</Text></View>;
 }

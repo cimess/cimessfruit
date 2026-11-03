@@ -8,7 +8,7 @@ const addressSchema = z.object({
   landmark: z.string(), note: z.string(), phoneNumber: z.string(),
 });
 const profileSchema = z.object({
-  id: z.string(), name: z.string().nullable(), email: z.string().nullable(), phone: z.string().nullable(),
+  id: z.string(), name: z.string().nullable(), email: z.string().nullable(), emailVerified: z.string().nullable().optional(), phone: z.string().nullable(),
   notificationsEnabled: z.boolean(), deliveryAddress: addressSchema.nullable(),
 });
 export async function fetchUserProfile(): Promise<UserProfile> {
@@ -23,7 +23,7 @@ function mapProfile(value: unknown): UserProfile {
   const profile = profileSchema.parse(value);
   return {
     id: profile.id, name: profile.name ?? "", email: profile.email ?? "", phoneNumber: profile.phone ?? "",
-    notificationsEnabled: profile.notificationsEnabled,
+    notificationsEnabled: profile.notificationsEnabled, emailVerified: profile.emailVerified ?? null,
     deliveryAddress: profile.deliveryAddress ?? {
       zoneId: "", streetOrClose: "", houseNumber: "", flatOrBlock: "", landmark: "", note: "", phoneNumber: profile.phone ?? "",
     },

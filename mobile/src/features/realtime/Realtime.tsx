@@ -4,8 +4,8 @@ import { fetch } from "expo/fetch";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/store";
 import { apiOrigin, apiRequest, getSessionSnapshot } from "@/lib/api";
-import { orderPolling, orderReads } from "@/features/order/store";
-import { consumeEvents, waitForRetry } from "./protocol";
+import { orderSubscriptions, orderReads } from "@/features/order/store";
+import { consumeEvents, retryDelay, waitForRetry } from "./protocol";
 export default function Realtime() {
   const owner = useAuthStore((state) => state.user?.id),
     query = useQueryClient();
@@ -27,7 +27,7 @@ export default function Realtime() {
       if (lifetime.signal.aborted) return;
       if (kind === "ready" || kind === "order.changed") {
         orderReads.invalidate();
-        orderPolling.refreshSubscribed();
+        orderSubscriptions.refreshSubscribed();
         void query.invalidateQueries({
           queryKey: ["approved-return-balance", owner],
         });
@@ -44,6 +44,7 @@ export default function Realtime() {
       while (!lifetime.signal.aborted) {
         connection = new AbortController();
         const current = connection;
+        let retryAfterMs = 0;
         let watchdog = setTimeout(() => current.abort(), 10000);
         try {
           const snapshot = await getSessionSnapshot();
@@ -61,16 +62,16 @@ export default function Realtime() {
             credentials: "omit",
             signal: current.signal,
           });
+          const retryAfter = Number(response.headers.get("retry-after"));
+          if (Number.isFinite(retryAfter) && retryAfter > 0) retryAfterMs = Math.min(retryAfter * 1000, 300000);
           if (response.status === 401) await apiRequest("/api/me", { signal: current.signal });
           await consumeEvents(
             response,
             (event) => {
               clearTimeout(watchdog);
               watchdog = setTimeout(() => current.abort(), 45000);
-              if (event === "heartbeat") return;
+              if (event === "heartbeat") { failures = 0; return; }
               if (event === "ready") {
-                failures = 0;
-                orderPolling.setStreaming(true);
                 reconcile("ready");
                 return;
               }
@@ -84,15 +85,13 @@ export default function Realtime() {
             current.signal,
           );
         } catch {
-          /* Existing deduplicated polling remains the fallback. */
+          /* Keep cached data; screen entry and manual refresh remain available. */
         } finally {
           clearTimeout(watchdog);
-          orderPolling.setStreaming(false);
         }
         if (!lifetime.signal.aborted)
           await waitForRetry(
-            Math.min(30000, 1000 * 2 ** Math.min(failures++, 5)) *
-              (0.5 + Math.random()),
+            Math.max(retryDelay(failures++), retryAfterMs),
             lifetime.signal,
           );
       }
@@ -101,7 +100,6 @@ export default function Realtime() {
       lifetime.abort();
       connection?.abort();
       if (debounce) clearTimeout(debounce);
-      orderPolling.setStreaming(false);
     };
   }, [owner, active, query]);
   return null;

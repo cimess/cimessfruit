@@ -540,13 +540,6 @@ function SupportSession({
                   Send us a message on WhatsApp
                 </Text>
               </Pressable>
-
-              <View className="mt-3.5 flex-row items-center justify-center">
-                <Ionicons name="call-outline" size={14} color="#6B7280" />
-                <Text className="ml-1.5 text-xs font-semibold text-gray-500">
-                  {loadingPhone ? "Fetching admin contact..." : `WhatsApp: ${supportPhone}`}
-                </Text>
-              </View>
             </View>
 
            

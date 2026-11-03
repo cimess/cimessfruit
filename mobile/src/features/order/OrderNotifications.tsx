@@ -3,7 +3,7 @@ import { AppState } from "react-native";
 import { useAuthStore } from "@/features/auth/store";
 import { useUserStore } from "@/features/user/store";
 import { useToastStore } from "@/features/ui/toastStore";
-import { orderPolling, useOrderStore } from "./store";
+import { orderSubscriptions, useOrderStore } from "./store";
 import { ORDER_LIST } from "./readCoordinator";
 
 export default function OrderNotifications() {
@@ -14,10 +14,10 @@ export default function OrderNotifications() {
 
   // One lifecycle owner for all list/detail/payment-sheet subscribers.
   useEffect(() => {
-    const update = () => orderPolling.setActive(!!userId && AppState.currentState === "active");
+    const update = () => orderSubscriptions.setActive(!!userId && AppState.currentState === "active");
     update();
     const listener = AppState.addEventListener("change", update);
-    return () => { listener.remove(); orderPolling.setActive(false); };
+    return () => { listener.remove(); orderSubscriptions.setActive(false); };
   }, [userId]);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function OrderNotifications() {
       }
       previous = next;
     });
-    const unwatch = orderPolling.subscribe(ORDER_LIST);
+    const unwatch = orderSubscriptions.subscribe(ORDER_LIST);
     return () => { unwatch(); unsubscribe(); };
   }, [userId, enabled]);
   return null;
