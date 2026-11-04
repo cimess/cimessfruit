@@ -1,0 +1,4 @@
+export type BankDetails = { bank: string; accountNumber: string; accountName: string };
+export type RefundTransferView = { id: string; amount: number; state: string; bankDetails: BankDetails; reference: string | null; createdAt: string };
+export type CreditView = { choice: "BANK_REFUND" | "CREDIT" | "REPLACEMENT"; id: string; orderId: string; approvedAmount: number; balance: number; reserved: number; spent: number; locked: number; refunded: number; deliveryRefund: number; refundDueAt: string; createdAt: string; bankDetails: BankDetails | null; transfers: RefundTransferView[] };
+export type ReturnView = { serverTime: string; credits: CreditView[]; order: { id: string; status: string; paymentStatus: string; deliveryFee: number; items: { id: string; name: string; optionLabel: string; quantity: number; unitPrice: number; returnedItems: { quantity: number }[] }[] } };

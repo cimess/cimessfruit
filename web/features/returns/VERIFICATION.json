@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-29",
+  "environment": "local automated fixtures; no live database migration, bank transfer or push delivery",
+  "api": {
+    "schemaValidation": "passed",
+    "typecheck": "passed",
+    "lint": "passed",
+    "fullSuite": { "total": 148, "passed": 135, "failed": 0, "skipped": 13 },
+    "returnsTests": 12,
+    "scenarios": ["full and partial credit checkout", "top-up amount only", "idempotent checkout", "Transfer locks exact balance", "spending locked credit rejected", "reservation settlement/release", "fixed payout snapshot after cancellation", "20-minute server gate", "idempotent transfer and confirmation", "audited unlock", "over-return caps", "inspection-only restock", "admin/owner authorization"],
+    "productionBuild": "blocked by existing Next.js TypeScript --showConfig parsing error",
+    "nextFeedback": "instruction retrieval failed with and without network escalation"
+  },
+  "mobile": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "existingSuite": { "total": 23, "passed": 23, "failed": 0 },
+    "androidExport": "passed to /tmp/cimessfruit-returns-export; subsequent small copy/guard changes checked by typecheck/lint",
+    "realDevice": "not tested"
+  },
+  "migration": "authored and Prisma-validated; not applied; includes financial checks and unique pending-transfer index",
+  "actualPostgresConcurrentRefundCheckout": "not tested; requires migrated isolated database/staging",
+  "manualBankTransfers": "none performed; application never initiates bank transfers",
+  "activation": "owner applies pending migrations before deploying generated Prisma client"
+}

@@ -1,0 +1,15 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import StoreShell from "../store/store-shell";
+import { useBasketReview } from "../store/use-basket-review";
+import BasketChecks from "../store/basket-checks";
+import { useCart } from "../store/use-cart";
+import { money, ShopPhoto } from "../store/catalogue";
+export default function CartPage() {
+  const { items, change, count } = useCart();
+  const check = useBasketReview(items);
+  const [error, setError] = useState("");
+  function update(id: string, quantity: number) { try { change(id, quantity); setError(""); } catch { setError("Your browser couldn’t save this change. Please allow storage and try again."); } }
+  return <StoreShell><section className="store-page-heading"><p className="eyebrow">A BAG FULL OF GOODNESS</p><h1>Your fresh picks.</h1><p>{count} {count === 1 ? "item" : "items"} in your bag</p></section><section className="store-section">{error && <p className="form-error" role="alert">{error}</p>}{!items.length ? <div className="empty-state"><span className="empty-symbol">◡</span><h2>Your bag is waiting for something fresh.</h2><p>Find a few favourites to get started.</p><Link className="button button-primary" href="/shop">Explore the shop →</Link></div> : <div className="bag-layout"><div>{items.map((line) => <article className="bag-line" key={line.optionId}><div className="bag-photo"><ShopPhoto src={line.imageUrl} name={line.name} /></div><div className="bag-info"><h2>{line.name}</h2><p>{line.label}</p><strong>{check.review?.lines.find((item) => item.optionId === line.optionId)?.issue ? "Unavailable" : money(check.review?.lines.find((item) => item.optionId === line.optionId)?.price ?? line.price)}</strong><button className="text-link" onClick={() => update(line.optionId, 0)}>Remove</button></div><div className="quantity-control"><button aria-label={`Decrease ${line.name}`} onClick={() => update(line.optionId,line.quantity-1)}>−</button><span>{line.quantity}</span><button aria-label={`Increase ${line.name}`} disabled={line.quantity >= Math.min(line.stock,99)} onClick={() => update(line.optionId,line.quantity+1)}>+</button></div><strong>{check.review?.lines.find((item) => item.optionId === line.optionId)?.issue ? "Unavailable" : money((check.review?.lines.find((item) => item.optionId === line.optionId)?.price ?? line.price)*line.quantity)}</strong></article>)}</div><aside className="bag-summary"><h2>Your bag summary</h2><div><span>Items ({count})</span><strong>{check.review?.itemSubtotal != null ? money(check.review.itemSubtotal) : "Awaiting checks"}</strong></div><p>Your bag is saved in this browser. Prices and availability may change.</p><BasketChecks check={check} />{check.review?.eligible ? <Link href="/checkout" className="button button-primary">Proceed to checkout →</Link> : <button className="button button-primary" disabled>{check.checking ? "Checking availability…" : check.error ? "Availability check required" : "Resolve bag issues to continue"}</button>}<Link className="button button-primary" href="/shop">Keep exploring →</Link></aside></div>}</section></StoreShell>;
+}

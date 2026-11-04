@@ -1,0 +1,12 @@
+CREATE TABLE "UploadAsset" (
+"id" UUID PRIMARY KEY, "userId" UUID REFERENCES "User"("id") ON DELETE SET NULL,
+"purpose" TEXT NOT NULL, "objectKey" TEXT NOT NULL UNIQUE, "url" TEXT NOT NULL,
+"contentType" TEXT NOT NULL, "size" INTEGER NOT NULL, "state" TEXT NOT NULL DEFAULT 'UPLOADING',
+"uploadedAt" TIMESTAMPTZ(3), "expiresAt" TIMESTAMPTZ(3) NOT NULL, "attachedTo" TEXT,
+"deletedAt" TIMESTAMPTZ(3), "attempts" INTEGER NOT NULL DEFAULT 0, "retryAt" TIMESTAMPTZ(3),
+"leaseUntil" TIMESTAMPTZ(3), "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CONSTRAINT "UploadAsset_purpose" CHECK ("purpose" IN ('PRODUCT','EVIDENCE')),
+CONSTRAINT "UploadAsset_state" CHECK ("state" IN ('UPLOADING','READY','ATTACHED','ARCHIVED','DELETE_PENDING','DELETED')));
+CREATE INDEX "UploadAsset_state_expiresAt_idx" ON "UploadAsset"("state", "expiresAt");
+CREATE TABLE "SubmissionReceipt" ("key" UUID PRIMARY KEY, "userId" UUID NOT NULL, "scope" TEXT NOT NULL, "hash" TEXT NOT NULL, "entityId" UUID NOT NULL, "createdAt" TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+ALTER TABLE "Product" ADD COLUMN "batchArrivedAt" TIMESTAMPTZ(3);

@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-29",
+  "scope": "Chat navigation, persisted HTTP conversations/disputes, policy approval and 20-minute final customer choice",
+  "api": {
+    "schemaValidation": "passed",
+    "typecheck": "passed",
+    "lint": "passed",
+    "tests": { "total": 156, "passed": 143, "failed": 0, "skipped": 13 },
+    "chatDisputeTests": 8,
+    "relatedReturnsTests": 12,
+    "coverage": ["paid ownership and item validation", "HTTPS evidence validation", "policy and override rules", "approval/rejection without physical stock return", "approval-based 20-minute deadline", "default bank-refund choice", "late choice rejection", "final bank/credit/replacement spendability", "admin authorization", "one-time replacement delivery claim in checkout fixture", "existing refund and message/inbox regressions"],
+    "productionBuild": "blocked by existing Next.js TypeScript --showConfig parsing error",
+    "feedback": "instruction retrieval failed in sandbox and network-enabled retry"
+  },
+  "mobile": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "tests": { "passed": 23, "failed": 0 },
+    "androidExport": "passed to /tmp/cimessfruit-chat-export; subsequent small account-key/copy changes checked by typecheck/lint"
+  },
+  "migration": "authored/Prisma-validated; not applied; owner applies after prior migrations before deployment",
+  "actualPostgresConcurrency": "not tested; isolated migrated staging required",
+  "browserAndDeviceFlows": "not tested against migrated database",
+  "webSockets": "not implemented; explicitly deferred",
+  "evidence": "text and HTTPS links; direct private photo uploads deferred",
+  "externalMessagesOrFinancialOperations": "none executed"
+}

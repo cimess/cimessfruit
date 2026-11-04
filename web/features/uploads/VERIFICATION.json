@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-29",
+  "feature": "Hybrid local drafts and Cloudflare R2 uploads",
+  "status": "Implemented and locally verified; migration/provider/device checks pending",
+  "api_tests": {
+    "command": "npm test",
+    "total": 170,
+    "passed": 157,
+    "failed": 0,
+    "skipped": 13,
+    "duration_ms": 5328.191858,
+    "skipped_reason": "Existing live database/integration checks are opt-in; not run against the owner database"
+  },
+  "focused_upload_product_maintenance_draft_tests": {
+    "total": 24,
+    "passed": 24,
+    "failed": 0
+  },
+  "mobile_tests": {
+    "command": "From api: node --import tsx --test --test-isolation=none ../mobile/tests/*.test.ts",
+    "passed": 23,
+    "failed": 0
+  },
+  "checks": {
+    "prisma_generate": "passed",
+    "prisma_validate": "passed",
+    "api_standalone_typescript": "passed",
+    "api_eslint": "passed",
+    "native_typescript": "passed",
+    "native_expo_lint": "passed",
+    "android_export": "passed; /tmp/cimessfruit-uploads-export",
+    "next_production_build": "blocked: existing Next.js 16.4.1 Could not parse output from TypeScript --showConfig",
+    "next_feedback_instructions": "sandbox and network retry both unable to check whether feedback is enabled"
+  },
+  "verified_with_fixtures": [
+    "Role/session checks before upload",
+    "Bounded image bytes and signature validation",
+    "Lifecycle record precedes R2 PUT; failed upload never returns URL",
+    "Server upload timestamps and rejected manually entered product metadata",
+    "READY expiry/ownership/purpose attachment checks",
+    "Private evidence owner/admin access",
+    "Archived published image on replacement",
+    "Durable save references detect payload/account/scope reuse",
+    "Repeated product save does not create another product",
+    "Explicit batch arrival versus photo-only notification behavior",
+    "Cloudflare delete failures remain pending",
+    "Crash after remote deletion retries safely after lease expiry",
+    "Exact GET cron middleware exceptions and protected manual cleanup handler",
+    "IndexedDB selected-image bytes and form recovery",
+    "Account/context storage isolation",
+    "Serialized draft removal after prior pending writes",
+    "Expired local draft removal"
+  ],
+  "settings": {
+    "max_image_bytes": 4194304,
+    "local_autosave_debounce_ms": 250,
+    "unattached_expiry_days": 7,
+    "cleanup_budget_ms": 40000,
+    "cleanup_route_max_duration_seconds": 60,
+    "cloudflare_delete_timeout_ms": 5000,
+    "cleanup_lease_ms": 60000,
+    "archived_photo_retention": "preserved; no automated deletion",
+    "submitted_evidence_retention": "preserved; no automated deletion"
+  },
+  "migration": {
+    "file": "prisma/migrations/20261030000000_hybrid_uploads/migration.sql",
+    "applied": false,
+    "owner_action": "Apply after previous pending migrations before deploying generated client"
+  },
+  "not_measured_or_executed": [
+    "Cloudflare live uploads, deletion and bucket access configuration",
+    "Real-device storage restart, photo picker recovery and native evidence preview",
+    "Web browser/device full interactive recovery against migrated staging",
+    "Real Postgres attachment/cleanup transaction contention",
+    "Vercel scheduled/manual production invocations",
+    "Hosted latency/bandwidth/storage savings",
+    "Migration application or external asset migration"
+  ],
+  "supersededBy": "architecture/review-next/VERIFICATION.json",
+  "currentStatus": "Whole-tracker retest: 187 API tests passed without skips in disposable PostgreSQL/Redis; web build and Android export passed; application/provider activation remains pending"
+}

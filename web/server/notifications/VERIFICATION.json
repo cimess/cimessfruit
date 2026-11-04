@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-29",
+  "environment": "local; fake notification transport; no provider credentials used",
+  "api": {
+    "schemaValidation": "passed",
+    "typecheck": "passed",
+    "lint": "passed",
+    "tests": {
+      "total": 136,
+      "passed": 123,
+      "failed": 0,
+      "skipped": 13
+    },
+    "notificationTests": 18,
+    "productionBuild": "blocked: Next.js 16.4.1 could not parse TypeScript --showConfig output; direct Next CLI helper returned empty stdout with exit code 0",
+    "nextFeedback": "instruction retrieval failed both sandboxed and network-enabled"
+  },
+  "mobile": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "tests": {
+      "total": 23,
+      "passed": 23,
+      "failed": 0
+    },
+    "androidProductionExport": "passed; output /tmp/cimessfruit-push-export; final subsequent changes were keyed settings remount and foreground event deduplication, checked with typecheck/lint",
+    "devicePushDelivery": "not tested"
+  },
+  "migration": "authored and Prisma-validated; not applied; owner applies before deploying updated generated client",
+  "qstash": "signature checked with locally signed fixtures; no live publication or delivery",
+  "ios": "inactive; credentials/membership and device tests deferred",
+  "capacityOrBandwidthClaims": "none; not measured",
+  "recoveryBatching": {
+    "eventsPerBatch": 20,
+    "testedBacklog": 65,
+    "observedFakeBatchSizes": [
+      20,
+      20,
+      20,
+      5
+    ],
+    "scenarios": [
+      "overlapping claims",
+      "partial publication failure",
+      "continuation failure",
+      "delayed fallback recovery",
+      "HTTP-200 per-item rejection"
+    ],
+    "liveProviderTested": false
+  }
+}

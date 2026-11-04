@@ -1,0 +1,505 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum ProductCategory {
+  FRUIT
+  PLANTAIN
+  SMOOTHIE
+}
+
+enum OptionSize {
+  SMALL
+  MEDIUM
+  BIG
+}
+
+enum OrderStatus {
+  RESOLVED
+  RETURNED
+  PENDING
+  PAID
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REVIEW_REQUIRED
+}
+
+enum DeliveryStatus {
+  RETURNED
+  PENDING_CONFIRMATION
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id                   String    @id @default(uuid()) @db.Uuid
+  name                 String?
+  email                String?   @unique
+  emailVerified        DateTime? @db.Timestamptz(3)
+  image                String?
+  phone                String?   @unique
+  passwordHash         String?
+  role                 Role      @default(CUSTOMER)
+  isActive             Boolean   @default(true)
+  selfDisabledAt       DateTime? @db.Timestamptz(3)
+  deliveryAddress      Json?
+  notificationsEnabled Boolean   @default(true)
+  catalogueNotificationsEnabled Boolean @default(false)
+  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @db.Timestamptz(3)
+  accounts             Account[]
+  sessions             Session[]
+  orders               Order[]
+  conversations        Conversation[]
+  pushInstallations PushInstallation[]
+  notificationEvents NotificationEvent[]
+  returnCredits ReturnCredit[]
+  disputes Dispute[]
+  uploads UploadAsset[]
+}
+
+model Account {
+  id                String  @id @default(uuid()) @db.Uuid
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.Uuid
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime @db.Timestamptz(3)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pushInstallations PushInstallation[]
+
+  @@index([userId])
+  @@index([expires])
+}
+
+// Push implementation is grouped in server/notifications. Apply migration before enabling.
+model PushInstallation {
+  id String @id @db.Uuid
+  token String @unique
+  platform String
+  userId String @db.Uuid
+  sessionId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+  @@index([userId])
+  @@index([sessionId])
+}
+
+model NotificationEvent {
+  id String @id @default(uuid()) @db.Uuid
+  key String @unique
+  kind String
+  userId String? @db.Uuid
+  entityId String @db.Uuid
+  title String
+  body String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  cursor String? @db.Uuid
+  fanoutDone Boolean @default(false)
+  completedAt DateTime? @db.Timestamptz(3)
+  publishedAt DateTime? @db.Timestamptz(3)
+  leaseId String? @db.Uuid
+  leaseUntil DateTime? @db.Timestamptz(3)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+  @@index([completedAt, publishedAt])
+}
+
+model NotificationDelivery {
+  id String @id @default(uuid()) @db.Uuid
+  eventId String @db.Uuid
+  installationId String @db.Uuid
+  // Snapshot owner/session/token, checked again before send or receipt handling.
+  userId String @db.Uuid
+  sessionId String @db.Uuid
+  token String
+  state String @default("PENDING")
+  attempts Int @default(0)
+  receiptChecks Int @default(0)
+  ticket String?
+  error String?
+  event NotificationEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  installation PushInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+  @@unique([eventId, installationId])
+  @@index([eventId, state])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime @db.Timestamptz(3)
+  @@unique([identifier, token])
+  @@index([expires])
+}
+
+model Product {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  description String          @default("")
+  category    ProductCategory
+  productType String?
+  batchArrivedAt DateTime? @db.Timestamptz(3)
+  imageUploadedAt DateTime? @db.Timestamptz(3)
+  imageUrl    String?
+  isAvailable Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+  options     ProductOption[]
+
+  @@index([isAvailable,createdAt(sort: Desc),id(sort: Desc)])
+}
+
+// All monetary amounts are integer kobo (NGN), never floating-point naira.
+model ProductOption {
+  id         String      @id @default(uuid()) @db.Uuid
+  productId  String      @db.Uuid
+  size       OptionSize
+  label      String
+  detail     String      @default("")
+  price      Int
+  stock      Int         @default(0)
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  orderItems OrderItem[]
+
+  @@unique([productId, size])
+}
+
+model DeliveryZone {
+  id                  String  @id
+  name                String
+  area                String
+  state               String
+  deliveryFee         Int
+  estimatedMinutesMin Int
+  estimatedMinutesMax Int
+  isAvailable         Boolean @default(true)
+  orders              Order[]
+  boundary            Json?
+}
+
+model Order {
+  id                    String         @id @default(uuid()) @db.Uuid
+  userId                String?        @db.Uuid
+  status                OrderStatus    @default(PENDING)
+  paymentStatus         PaymentStatus  @default(PENDING)
+  deliveryStatus        DeliveryStatus @default(PENDING_CONFIRMATION)
+  // Snapshot of the address at checkout; subsequent profile edits must not change it.
+  deliveryAddress       Json
+  deliveryZoneId        String
+  deliveryFee           Int
+  itemSubtotal          Int
+  total                 Int
+  creditApplied         Int @default(0)
+  estimatedDeliveryTime String
+  idempotencyKey        String
+  requestHash           String
+  createdAt             DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime       @updatedAt @db.Timestamptz(3)
+  user                  User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deliveryZone          DeliveryZone   @relation(fields: [deliveryZoneId], references: [id], onDelete: Restrict)
+  items                 OrderItem[]
+  payment               Payment?
+  returnCredits ReturnCredit[]
+  creditAllocations CreditAllocation[]
+  disputes Dispute[] @relation("DisputeSource")
+  replacementFor Dispute? @relation("DisputeReplacement")
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, createdAt])
+  @@index([deliveryZoneId])
+}
+
+model OrderItem {
+  id              String        @id @default(uuid()) @db.Uuid
+  orderId         String        @db.Uuid
+  productOptionId String        @db.Uuid
+  // Product details and prices are snapshots for historical orders.
+  name            String
+  optionLabel     String
+  optionDetail    String
+  imageUrl        String?
+  quantity        Int
+  unitPrice       Int
+  subtotal        Int
+  returnedItems ReturnedItem[]
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  productOption   ProductOption @relation(fields: [productOptionId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productOptionId])
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  orderId           String        @unique @db.Uuid
+  amount            Int
+  currency          String        @default("NGN") @db.Char(3)
+  status            PaymentStatus @default(PENDING)
+  provider          String        @default("paystack")
+  providerReference String        @unique
+  authorizationUrl  String?
+  verifiedResponse  Json?
+  initiatedAt       DateTime      @default(now()) @db.Timestamptz(3)
+  confirmedAt       DateTime?     @db.Timestamptz(3)
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+}
+
+// Short-lived, one-use browser-to-native credential handoff.
+model MobileAuthGrant {
+  codeHash  String   @id
+  userId    String   @db.Uuid
+  challenge String
+  expires   DateTime @db.Timestamptz(3)
+
+  @@index([expires])
+  @@index([userId])
+}
+
+model AuthRateLimit {
+  key      String   @id
+  attempts Int      @default(1)
+  expires  DateTime @db.Timestamptz(3)
+
+  @@index([expires])
+}
+
+model Conversation {
+  kind String @default("CHAT")
+  dispute Dispute?
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  subject String
+  productId String? @db.Uuid
+  orderId String? @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ConversationMessage[]
+  @@index([userId, updatedAt])
+}
+model ConversationMessage {
+  id String @id @default(uuid()) @db.Uuid
+  conversationId String @db.Uuid
+  fromAdmin Boolean @default(false)
+  body String
+  evidenceUrls Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  @@index([conversationId, createdAt])
+}
+
+// Returns/refunds implementation: features/returns. Money is integer NGN kobo.
+model ReturnCredit {
+  id String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  userId String? @db.Uuid
+  choice String @default("CREDIT")
+  dispute Dispute?
+  approvalKey String @unique
+  requestHash String
+  approvedBy String @db.Uuid
+  reason String
+  approvedAmount Int
+  deliveryRefund Int @default(0)
+  balance Int
+  reserved Int @default(0)
+  spent Int @default(0)
+  locked Int @default(0)
+  refunded Int @default(0)
+  bankDetails Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  refundDueAt DateTime @db.Timestamptz(3)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items ReturnedItem[]
+  allocations CreditAllocation[]
+  transfers RefundTransfer[]
+  @@index([userId, createdAt])
+  @@index([orderId])
+}
+model ReturnedItem {
+  id String @id @default(uuid()) @db.Uuid
+  creditId String @db.Uuid
+  orderItemId String @db.Uuid
+  quantity Int
+  amount Int
+  restocked Boolean @default(false)
+  credit ReturnCredit @relation(fields: [creditId], references: [id], onDelete: Restrict)
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  @@unique([creditId, orderItemId])
+  @@index([orderItemId])
+}
+model CreditAllocation {
+  id String @id @default(uuid()) @db.Uuid
+  creditId String @db.Uuid
+  orderId String @db.Uuid
+  amount Int
+  state String
+  credit ReturnCredit @relation(fields: [creditId], references: [id], onDelete: Restrict)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  @@unique([creditId, orderId])
+  @@index([orderId, state])
+}
+model RefundTransfer {
+  id String @id @default(uuid()) @db.Uuid
+  creditId String @db.Uuid
+  key String @unique
+  amount Int
+  state String @default("PENDING")
+  bankDetails Json
+  startedBy String @db.Uuid
+  completedBy String? @db.Uuid
+  reference String? @unique
+  cancellationReason String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  completedAt DateTime? @db.Timestamptz(3)
+  credit ReturnCredit @relation(fields: [creditId], references: [id], onDelete: Restrict)
+  @@index([creditId, state])
+}
+
+model Dispute {
+  id String @id @default(uuid()) @db.Uuid
+  key String @unique
+  requestHash String
+  conversationId String @unique @db.Uuid
+  orderId String @db.Uuid
+  userId String @db.Uuid
+  reason String
+  items Json
+  approvedItems Json?
+  requestedChoice String @default("CREDIT")
+  status String @default("OPEN")
+  responsibility String?
+  decisionNote String?
+  decidedBy String? @db.Uuid
+  decidedAt DateTime? @db.Timestamptz(3)
+  creditId String? @unique @db.Uuid
+  replacementOrderId String? @unique @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  order Order @relation("DisputeSource", fields: [orderId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credit ReturnCredit? @relation(fields: [creditId], references: [id], onDelete: Restrict)
+  replacementOrder Order? @relation("DisputeReplacement", fields: [replacementOrderId], references: [id], onDelete: SetNull)
+  @@index([userId, createdAt])
+  @@index([orderId])
+}
+
+// Hybrid drafts: device holds forms; server tracks durable file lifecycle only.
+model UploadAsset {
+  id String @id @db.Uuid
+  userId String? @db.Uuid
+  purpose String
+  objectKey String @unique
+  url String
+  contentType String
+  size Int
+  state String @default("UPLOADING")
+  uploadedAt DateTime? @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  attachedTo String?
+  deletedAt DateTime? @db.Timestamptz(3)
+  attempts Int @default(0)
+  retryAt DateTime? @db.Timestamptz(3)
+  leaseUntil DateTime? @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([state, expiresAt])
+}
+model SubmissionReceipt {
+  key String @id @db.Uuid
+  userId String @db.Uuid
+  scope String
+  hash String
+  entityId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+}
+
+model RealtimeSignal {
+  id String @id @default(uuid()) @db.Uuid
+  kind String
+  userId String? @db.Uuid
+  entityId String @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  @@index([createdAt, id])
+}
+
+// External email is kept separate from authenticated customer conversations.
+model SupportEmail {
+  id String @id @default(uuid()) @db.Uuid
+  resendId String @unique @db.Uuid
+  webhookId String @unique
+  from String
+  replyTo String?
+  to String[]
+  subject String
+  body String
+  messageId String?
+  attachments Json
+  status String @default("OPEN")
+  receivedAt DateTime @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  replies SupportEmailReply[]
+  @@index([status, createdAt, id])
+  @@index([createdAt, id])
+}
+
+model SupportEmailReply {
+  id String @id @db.Uuid
+  emailId String @db.Uuid
+  adminId String @db.Uuid
+  from String
+  to String
+  replyTo String
+  subject String
+  body String
+  inReplyTo String?
+  state String @default("PENDING")
+  resendId String? @unique
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  sentAt DateTime? @db.Timestamptz(3)
+  email SupportEmail @relation(fields: [emailId], references: [id], onDelete: Restrict)
+  @@index([emailId, createdAt])
+}
