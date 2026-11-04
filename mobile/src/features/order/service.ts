@@ -1,7 +1,7 @@
 import * as Crypto from "expo-crypto";
 import { apiRequest, apiOrigin, readStoredSession } from "@/lib/api";
 import type { Order, OrderDraft } from "./types";
-type ServerOrder = { creditApplied?: number; payment?: { amount: number }; id: string; status: string; paymentStatus: string; createdAt: string; updatedAt: string; estimatedDeliveryTime: string; deliveryAddress: OrderDraft["deliveryAddress"]; deliveryFee: number; itemSubtotal: number; total: number; items: { id: string; productOptionId: string; name: string; optionLabel: string; optionDetail: string; quantity: number; unitPrice: number; subtotal: number; imageUrl: string | null }[] };
+type ServerOrder = { usedFreeShipping?: boolean; creditApplied?: number; payment?: { amount: number }; id: string; status: string; paymentStatus: string; createdAt: string; updatedAt: string; estimatedDeliveryTime: string; deliveryAddress: OrderDraft["deliveryAddress"]; deliveryFee: number; itemSubtotal: number; total: number; items: { id: string; productOptionId: string; name: string; optionLabel: string; optionDetail: string; quantity: number; unitPrice: number; subtotal: number; imageUrl: string | null }[] };
 type Result = { order: ServerOrder; account?: Order["account"]; eligibility?: Order["eligibility"] };
 function mapOrder(result: Result): Order {
   const o = result.order;
@@ -12,7 +12,7 @@ function mapOrder(result: Result): Order {
 let pending: { body: string; key: string; owner: string } | undefined;
 export async function createOrder(draft: OrderDraft): Promise<Order> {
   if (draft.smoothieFee) throw new Error("Custom blending is currently unavailable. Remove it before checkout.");
-  const body = JSON.stringify({ items: draft.items.map(i => ({ productId: i.productId, optionId: i.optionId, quantity: i.quantity })), deliveryAddress: draft.deliveryAddress, useReturnCredit: draft.useReturnCredit ?? false, ...(draft.replacementDisputeId ? { replacementDisputeId: draft.replacementDisputeId } : {}) });
+  const body = JSON.stringify({ items: draft.items.map(i => ({ productId: i.productId, optionId: i.optionId, quantity: i.quantity })), deliveryAddress: draft.deliveryAddress, useFreeShipping: draft.useFreeShipping ?? false, useReturnCredit: draft.useReturnCredit ?? false, ...(draft.replacementDisputeId ? { replacementDisputeId: draft.replacementDisputeId } : {}) });
   const owner = (await readStoredSession())?.token;
   if (!owner) throw new Error("Please sign in.");
   if (pending?.body !== body || pending.owner !== owner) pending = { body, owner, key: Crypto.randomUUID() };

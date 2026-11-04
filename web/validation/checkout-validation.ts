@@ -15,7 +15,7 @@ export const basketSchema = z.strictObject({
     .refine((items) => new Set(items.map((item) => item.optionId)).size === items.length, "Duplicate sizes"),
 });
 export const basketReviewSchema = basketSchema.extend({ zoneId: z.string().min(1).max(100).optional() });
-export const checkoutSchema = basketSchema.extend({ deliveryAddress: deliveryAddressSchema, useReturnCredit: z.boolean().default(false), replacementDisputeId: z.uuid().optional() });
+export const checkoutSchema = basketSchema.extend({ deliveryAddress: deliveryAddressSchema, useFreeShipping: z.boolean().optional(), useReturnCredit: z.boolean().default(false), replacementDisputeId: z.uuid().optional() });
 export const checkoutKeySchema = z.string().regex(/^[a-zA-Z0-9_-]{8,128}$/);
 export const manualPaymentAccount = { bank: "Moniepoint", accountNumber: "6645847720", accountName: "Aimuan Enterprise" } as const;
 export const paymentLabels: Record<string, string> = {

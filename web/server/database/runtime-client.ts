@@ -3,7 +3,11 @@ import { PrismaClient } from "../../generated/prisma/client";
 import { BoundedPrismaPg } from "./bounded-adapter";
 import { readDatabasePoolConfig } from "./pool-config";
 
-export function createRuntimeDatabase({ env = process.env, attachPool, onPoolError }: {
+export function createRuntimeDatabase({
+  env = process.env,
+  attachPool,
+  onPoolError,
+}: {
   env?: Record<string, string | undefined>;
   attachPool: (pool: pg.Pool) => void;
   onPoolError?: () => void;
@@ -21,7 +25,10 @@ export function createRuntimeDatabase({ env = process.env, attachPool, onPoolErr
   pool.on("error", () => {
     // Do not log driver errors, query parameters or credentials.
     if (onPoolError) onPoolError();
-    else console.warn("Idle database connection lost; the pool will reconnect when needed.");
+    else
+      console.warn(
+        "Idle database connection lost; the pool will reconnect when needed.",
+      );
   });
   attachPool(pool);
   const adapter = new BoundedPrismaPg(pool, config.statementTimeoutMillis);
@@ -33,8 +40,15 @@ export function createRuntimeDatabase({ env = process.env, attachPool, onPoolErr
     },
   });
   return {
-    prisma, pool, config,
+    prisma,
+    pool,
+    config,
     // Safe operational counters; do not expose connection options/credentials.
-    status: () => ({ max: config.max, total: pool.totalCount, idle: pool.idleCount, waiting: pool.waitingCount }),
+    status: () => ({
+      max: config.max,
+      total: pool.totalCount,
+      idle: pool.idleCount,
+      waiting: pool.waitingCount,
+    }),
   };
 }

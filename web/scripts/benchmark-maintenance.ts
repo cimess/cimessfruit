@@ -1,4 +1,4 @@
-import pg from "pg";
+import pg from "@/node_modules/@types/pg";
 import { performance } from "node:perf_hooks";
 async function main() {
   const url = new URL(process.env.DATABASE_URL ?? "");

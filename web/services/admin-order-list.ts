@@ -7,6 +7,7 @@ export const adminOrderSelect = {
   paymentStatus: true,
   total: true,
   creditApplied: true,
+  usedFreeShipping: true,
   createdAt: true,
   deliveryAddress: true,
   payment: { select: { providerReference: true, amount: true } },

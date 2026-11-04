@@ -3,7 +3,7 @@ import CreditChoice from "@/features/returns/CreditChoice";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
-import { Stack, useRouter } from "expo-router";
+import { Icon, Stack, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -44,7 +44,8 @@ const bodyFont = Platform.select({
 });
 
 export default function Checkout() {
-  const creditOwner = useAuthStore(state => state.user?.id);
+  const creditOwner = useAuthStore((state) => state.user?.id);
+  const [useFreeShipping, setUseFreeShipping] = useState(false);
   const [useReturnCredit, setUseReturnCredit] = useState(false);
   const [replacementId, setReplacementId] = useState("");
   const zoneState = useDeliveryZones();
@@ -52,19 +53,26 @@ export default function Checkout() {
   const [mapVisible, setMapVisible] = useState(false);
   const [isPaymentVisible, setIsPaymentVisible] = useState(false);
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
-  const pendingOrder = useOrderStore(state => pendingOrderId ? state.orders[pendingOrderId] ?? null : null);
-  const paymentError = useOrderStore(state => pendingOrderId ? state.readErrors[pendingOrderId] : null);
-  useOrderPolling({ id: pendingOrderId ?? undefined, enabled: isPaymentVisible && !!pendingOrder?.account && !paymentError });
+  const pendingOrder = useOrderStore((state) =>
+    pendingOrderId ? (state.orders[pendingOrderId] ?? null) : null,
+  );
+  const paymentError = useOrderStore((state) =>
+    pendingOrderId ? state.readErrors[pendingOrderId] : null,
+  );
+  useOrderPolling({
+    id: pendingOrderId ?? undefined,
+    enabled: isPaymentVisible && !!pendingOrder?.account && !paymentError,
+  });
   const manualPaymentAccount = pendingOrder?.account;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [entry] = useState(() => new Animated.Value(0));
   const items = useCartStore((state) => state.items);
   const customSmoothieRequested = useCartStore(
-    (state) => state.customSmoothieRequested
+    (state) => state.customSmoothieRequested,
   );
   const customSmoothiePrice = useCartStore(
-    (state) => state.customSmoothiePrice
+    (state) => state.customSmoothiePrice,
   );
   const itemCount = useCartStore((state) => state.getTotalItems());
   const cartTotal = useCartStore((state) => state.getTotalAmount());
@@ -74,7 +82,7 @@ export default function Checkout() {
   const showToast = useToastStore((state) => state.showToast);
   const profile = useUserStore((state) => state.profile);
   const isLoadingProfile = useUserStore((state) => state.isLoadingProfile);
-  const loadProfile = useUserStore((state) => state.loadProfile);
+  const loadProfile = useUserStore((state) => state.refreshProfile);
 
   const [addressDraft, setAddress] = useState<DeliveryAddressDraft>({
     zoneId: "",
@@ -86,22 +94,29 @@ export default function Checkout() {
     phoneNumber: "",
   });
   const [hasEditedAddress, setHasEditedAddress] = useState(false);
-  const address = !hasEditedAddress && profile ? profile.deliveryAddress : addressDraft;
+  const address =
+    !hasEditedAddress && profile ? profile.deliveryAddress : addressDraft;
 
-  const activeDeliveryZone = zoneState.zones.find(zone => zone.id === address.zoneId) ?? unavailableZone;
+  const activeDeliveryZone =
+    zoneState.zones.find((zone) => zone.id === address.zoneId) ??
+    unavailableZone;
 
   const orderLines = useMemo(() => Object.values(items), [items]);
   const itemSubtotal = useMemo(
     () =>
-      orderLines.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      ),
-    [orderLines]
+      orderLines.reduce((total, item) => total + item.price * item.quantity, 0),
+    [orderLines],
   );
   const smoothieFee = customSmoothieRequested ? customSmoothiePrice : 0;
+  const applyFreeShipping =
+    useFreeShipping &&
+    !replacementId &&
+    (profile?.freeShipping ?? 0) > 0 &&
+    activeDeliveryZone.deliveryFee > 0;
   const deliveryFee = activeDeliveryZone.isAvailable
-    ? replacementId ? 0 : activeDeliveryZone.deliveryFee
+    ? replacementId || applyFreeShipping
+      ? 0
+      : activeDeliveryZone.deliveryFee
     : 0;
   const total = cartTotal + deliveryFee;
   const canPlaceOrder =
@@ -128,15 +143,14 @@ export default function Checkout() {
     outputRange: [18, 0],
   });
 
-  const updateAddress = (
-    key: keyof DeliveryAddressDraft,
-    value: string
-  ) => {
+  const updateAddress = (key: keyof DeliveryAddressDraft, value: string) => {
     setHasEditedAddress(true);
     setAddress((current) => ({
       ...(!hasEditedAddress && profile ? profile.deliveryAddress : current),
       [key]: value,
-      ...(key === "streetOrClose" || key === "houseNumber" ? { coordinates: undefined } : {}),
+      ...(key === "streetOrClose" || key === "houseNumber"
+        ? { coordinates: undefined }
+        : {}),
     }));
   };
 
@@ -145,22 +159,43 @@ export default function Checkout() {
     if (!canPlaceOrder) {
       Alert.alert(
         "Complete delivery details",
-        "Add your street or close, house number, and phone number before placing the order."
+        "Add your street or close, house number, and phone number before placing the order.",
       );
       return;
     }
 
     try {
-      const order = await placeOrder({ ...buildOrderDraft({ items, deliveryAddress: address, deliveryZone: activeDeliveryZone, customSmoothieRequested, customSmoothiePrice }), useReturnCredit, ...(replacementId ? { replacementDisputeId: replacementId } : {}) });
+      const order = await placeOrder({
+        ...buildOrderDraft({
+          items,
+          deliveryAddress: address,
+          deliveryZone: activeDeliveryZone,
+          customSmoothieRequested,
+          customSmoothiePrice,
+        }),
+        useFreeShipping: applyFreeShipping,
+        useReturnCredit,
+        ...(replacementId ? { replacementDisputeId: replacementId } : {}),
+      });
+      void useUserStore.getState().refreshProfile();
       setPendingOrderId(order.id);
       if (order.paymentStatus === "payment_verified") {
-        clearCart(); showToast("Order paid using return credit.", "success");
+        clearCart();
+        showToast("Order paid using return credit.", "success");
         router.replace({ pathname: "/order/[id]", params: { id: order.id } });
         return;
       }
-      if (!order.account || !order.eligibility?.eligible) throw new Error(order.eligibility?.issues.join(" ") || "Payment unavailable.");
+      if (!order.account || !order.eligibility?.eligible)
+        throw new Error(
+          order.eligibility?.issues.join(" ") || "Payment unavailable.",
+        );
       setIsPaymentVisible(true);
-    } catch (error) { Alert.alert("Checkout unavailable", error instanceof Error ? error.message : "Please retry."); }
+    } catch (error) {
+      Alert.alert(
+        "Checkout unavailable",
+        error instanceof Error ? error.message : "Please retry.",
+      );
+    }
   };
 
   const handlePaidConfirmation = async () => {
@@ -182,7 +217,7 @@ export default function Checkout() {
     } catch (error) {
       Alert.alert(
         "Transfer report not saved",
-        error instanceof Error ? error.message : "Please try again."
+        error instanceof Error ? error.message : "Please try again.",
       );
     }
   };
@@ -200,9 +235,25 @@ export default function Checkout() {
       className="flex-1 bg-[#FAFBF7]"
     >
       <Stack.Screen options={{ headerShown: false }} />
-      {mapVisible && <DeliveryMap zones={zoneState.zones} address={address} onClose={() => setMapVisible(false)} onSelect={value => { setHasEditedAddress(true); setAddress(value); }} />}
-      {settingsError ? <Text accessibilityRole="alert">{settingsError}</Text> : null}
-      {paymentError ? <Text accessibilityRole="alert">Unable to refresh payment details. Please reopen payment to retry.</Text> : null}
+      {mapVisible && (
+        <DeliveryMap
+          zones={zoneState.zones}
+          address={address}
+          onClose={() => setMapVisible(false)}
+          onSelect={(value) => {
+            setHasEditedAddress(true);
+            setAddress(value);
+          }}
+        />
+      )}
+      {settingsError ? (
+        <Text accessibilityRole="alert">{settingsError}</Text>
+      ) : null}
+      {paymentError ? (
+        <Text accessibilityRole="alert">
+          Unable to refresh payment details. Please reopen payment to retry.
+        </Text>
+      ) : null}
 
       <ScrollView
         keyboardShouldPersistTaps="handled"
@@ -246,8 +297,8 @@ export default function Checkout() {
               className="mt-3 max-w-[320px] text-[15px] leading-6 text-white/70"
               style={{ fontFamily: bodyFont }}
             >
-              Confirm your delivery address and review the order before
-              it goes to the store.
+              Confirm your delivery address and review the order before it goes
+              to the store.
             </Text>
           </Animated.View>
         </View>
@@ -307,7 +358,9 @@ export default function Checkout() {
               <ZoneMetric
                 icon="cash-outline"
                 label="Delivery fee"
-                value={formatNaira(activeDeliveryZone.deliveryFee)}
+                value={formatNaira(
+                  applyFreeShipping ? 0 : activeDeliveryZone.deliveryFee,
+                )}
               />
               <ZoneMetric
                 icon="time-outline"
@@ -316,6 +369,52 @@ export default function Checkout() {
               />
             </View>
           </View>
+
+          <Pressable
+            accessibilityRole="checkbox"
+            accessibilityState={{
+              checked: !!applyFreeShipping,
+              disabled:
+                isPlacingOrder ||
+                !!replacementId ||
+                !profile?.freeShipping ||
+                !activeDeliveryZone.deliveryFee,
+            }}
+            disabled={
+              isPlacingOrder ||
+              !!replacementId ||
+              !profile?.freeShipping ||
+              !activeDeliveryZone.deliveryFee
+            }
+            onPress={() => setUseFreeShipping((value) => !value)}
+            className="mt-5 flex-col rounded-2xl bg-white p-4"
+          >
+            {/* TOP: Free deliveries remaining */}
+            {(profile?.freeShipping ?? 0) > 0 && (
+              <View className="mb-3 flex-row items-center">
+                <Ionicons name="bicycle-outline" size={16} color="#033035" />
+                <Text className="ml-2 text-xs font-bold text-[#033035]">
+                  {applyFreeShipping
+                    ? (profile?.freeShipping ?? 0) - 1
+                    : (profile?.freeShipping ?? 0)}{" "}
+                  free deliveries remaining
+                </Text>
+              </View>
+            )}
+
+            {/* BOTTOM: Checkbox */}
+            <View className="flex-row items-center">
+              <Ionicons
+                name={applyFreeShipping ? "checkbox" : "square-outline"}
+                size={24}
+                color="#128A3A"
+              />
+
+              <Text className="ml-3 flex-1 text-sm font-bold text-[#033035]">
+                Use one free delivery
+              </Text>
+            </View>
+          </Pressable>
 
           <View className="mt-5 rounded-[28px] bg-white p-4">
             <SectionTitle
@@ -328,7 +427,21 @@ export default function Checkout() {
               }
             />
 
-            <ZonePicker {...zoneState} value={address.zoneId} onChange={zoneId => { setHasEditedAddress(true); setAddress({ ...address, zoneId, coordinates: undefined, ...(address.coordinates ? { streetOrClose: "", houseNumber: "" } : {}) }); }} />
+            <ZonePicker
+              {...zoneState}
+              value={address.zoneId}
+              onChange={(zoneId) => {
+                setHasEditedAddress(true);
+                setAddress({
+                  ...address,
+                  zoneId,
+                  coordinates: undefined,
+                  ...(address.coordinates
+                    ? { streetOrClose: "", houseNumber: "" }
+                    : {}),
+                });
+              }}
+            />
             <Pressable
               onPress={handleUseMap}
               className="mt-4 flex-row items-center rounded-[22px] bg-[#128A3A] p-3.5"
@@ -370,8 +483,7 @@ export default function Checkout() {
               <CheckoutField
                 label="Flat / Block"
                 placeholder={
-                  profile?.deliveryAddress.flatOrBlock ||
-                  "e.g. Block B, Flat 2"
+                  profile?.deliveryAddress.flatOrBlock || "e.g. Block B, Flat 2"
                 }
                 value={address.flatOrBlock}
                 onChangeText={(value) => updateAddress("flatOrBlock", value)}
@@ -476,17 +588,12 @@ export default function Checkout() {
                   value={formatNaira(smoothieFee)}
                 />
               )}
-              <SummaryRow
-                label="Delivery"
-                value={formatNaira(deliveryFee)}
-              />
+              <SummaryRow label="Delivery" value={formatNaira(deliveryFee)} />
 
               <View className="my-3 h-px bg-white/10" />
 
               <View className="flex-row items-center justify-between">
-                <Text className="text-sm font-bold text-white/60">
-                  Total
-                </Text>
+                <Text className="text-sm font-bold text-white/60">Total</Text>
                 <Text className="text-2xl font-extrabold text-white">
                   {formatNaira(total)}
                 </Text>
@@ -494,7 +601,13 @@ export default function Checkout() {
             </View>
           </View>
 
-          <CreditChoice key={creditOwner ?? "guest"} selected={useReturnCredit} onChange={setUseReturnCredit} replacementId={replacementId} onReplacement={setReplacementId} />
+          <CreditChoice
+            key={creditOwner ?? "guest"}
+            selected={useReturnCredit}
+            onChange={setUseReturnCredit}
+            replacementId={replacementId}
+            onReplacement={setReplacementId}
+          />
           <Pressable
             disabled={!canPlaceOrder || isPlacingOrder}
             onPress={handlePlaceOrder}
@@ -526,8 +639,9 @@ export default function Checkout() {
                   Transfer payment
                 </Text>
                 <Text className="mt-1 text-sm font-semibold leading-5 text-gray-500">
-                  Transfer within 24 hours. Send the remaining amount shown, then tap paid to request payment verification
-                  for verification.
+                  Transfer within 24 hours. Send the remaining amount shown,
+                  then tap paid to request payment verification for
+                  verification.
                 </Text>
               </View>
 
@@ -540,7 +654,10 @@ export default function Checkout() {
             </View>
 
             <View className="mt-5 rounded-[24px] bg-[#FAFBF7] p-4">
-              <PaymentRow label="Bank" value={manualPaymentAccount?.bank ?? ""} />
+              <PaymentRow
+                label="Bank"
+                value={manualPaymentAccount?.bank ?? ""}
+              />
               <PaymentRow
                 label="Account number"
                 value={manualPaymentAccount?.accountNumber ?? ""}
@@ -550,7 +667,13 @@ export default function Checkout() {
                 value={manualPaymentAccount?.accountName ?? ""}
               />
               <View className="my-3 h-px bg-gray-200" />
-              <PaymentRow label="Amount" value={formatNaira(pendingOrder?.amountDue ?? pendingOrder?.total ?? 0)} strong />
+              <PaymentRow
+                label="Amount"
+                value={formatNaira(
+                  pendingOrder?.amountDue ?? pendingOrder?.total ?? 0,
+                )}
+                strong
+              />
             </View>
 
             <Pressable
@@ -608,9 +731,7 @@ function SectionTitle({
       </View>
 
       <View className="flex-1">
-        <Text className="text-base font-extrabold text-gray-950">
-          {title}
-        </Text>
+        <Text className="text-base font-extrabold text-gray-950">{title}</Text>
         <Text className="mt-0.5 text-xs font-semibold text-gray-500">
           {subtitle}
         </Text>
@@ -631,9 +752,7 @@ function ZoneMetric({
   return (
     <View className="flex-1 rounded-[22px] bg-[#FAFBF7] p-3">
       <Ionicons name={icon} size={18} color="#033035" />
-      <Text className="mt-2 text-[11px] font-bold text-gray-500">
-        {label}
-      </Text>
+      <Text className="mt-2 text-[11px] font-bold text-gray-500">{label}</Text>
       <Text className="mt-0.5 text-sm font-extrabold text-[#033035]">
         {value}
       </Text>

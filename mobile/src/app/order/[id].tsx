@@ -271,7 +271,7 @@ export default function OrderDetails() {
           )}
           <SummaryRow
             label="Delivery"
-            value={formatNaira(order.deliveryFee)}
+            value={order.usedFreeShipping ? `${formatNaira(order.deliveryFee)} · Free shipping used` : formatNaira(order.deliveryFee)}
           />
           <View className="my-3 h-px bg-white/10" />
           <View className="flex-row items-center justify-between">

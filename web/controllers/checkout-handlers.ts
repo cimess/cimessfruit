@@ -109,7 +109,7 @@ export async function getCheckoutSettings(dependencies?: CheckoutDependencies) {
     const account = await user(deps);
     const [zones, profile] = await Promise.all([
       db.deliveryZone.findMany({ where: { isAvailable: true }, orderBy: { id: "asc" } }),
-      db.user.findUnique({ where: { id: account.id }, select: { phone: true, deliveryAddress: true } }),
+      db.user.findUnique({ where: { id: account.id }, select: { phone: true, deliveryAddress: true, freeShipping: true } }),
     ]);
     return json({ zones, zone: zones[0] ?? null, profile });
   });
@@ -154,7 +154,15 @@ export async function createCheckout(request: Request, dependencies?: CheckoutDe
         }, select: { id: true, creditId: true }
       }) : null;
       if (input.replacementDisputeId && (!replacement || !input.useReturnCredit)) throw new CheckoutError("This replacement delivery benefit is unavailable. Refresh checkout.");
-      const deliveryFee = replacement ? 0 : zone.deliveryFee;
+      const usedFreeShipping = !!input.useFreeShipping && !replacement && zone.deliveryFee > 0;
+      if (usedFreeShipping) {
+        const claimed = await tx.user.updateMany({
+          where: { id: account.id, isActive: true, freeShipping: { gt: 0 } },
+          data: { freeShipping: { decrement: 1 } },
+        });
+        if (claimed.count !== 1) throw new CheckoutError("You have no free deliveries remaining. Uncheck free shipping and try again.");
+      }
+      const deliveryFee = replacement || usedFreeShipping ? 0 : zone.deliveryFee;
       const itemSubtotal = lines.reduce((sum, line) => sum + line.subtotal, 0);
       const total = itemSubtotal + deliveryFee;
       if (!Number.isSafeInteger(total) || total > 2147483647 || total <= 0) throw new CheckoutError("Order total is outside the supported range.");
@@ -168,7 +176,7 @@ export async function createCheckout(request: Request, dependencies?: CheckoutDe
       const created = await tx.order.create({
         data: {
           id, userId: account.id, deliveryAddress: input.deliveryAddress, deliveryZoneId: zone.id,
-          deliveryFee, itemSubtotal, total, creditApplied: credit.applied,
+          usedFreeShipping, deliveryFee, itemSubtotal, total, creditApplied: credit.applied,
           ...(creditPaid ? { status: "PAID", paymentStatus: "SUCCESS" } : {}), estimatedDeliveryTime: `${zone.estimatedMinutesMin}-${zone.estimatedMinutesMax} mins`,
           idempotencyKey: key.data, requestHash, items: { create: lines },
           payment: { create: { amount: credit.due, provider: creditPaid ? "return_credit" : "manual_transfer", providerReference: `CF-${id}`, ...(creditPaid ? { status: "SUCCESS", confirmedAt: new Date() } : {}) } },
@@ -258,6 +266,7 @@ export async function updateOrder(request: Request, id: string, admin = false, d
       if (action === "reject" && current.paymentStatus !== "REVIEW_REQUIRED") throw new CheckoutError("Only reported transfers can be rejected.");
       const cancelled = action === "cancel" || action === "reject";
       if (current.creditApplied && (cancelled || action === "verify")) await settleCredit(tx, id, cancelled ? "release" : "spend");
+      if (cancelled && current.usedFreeShipping && current.userId) await tx.user.update({ where: { id: current.userId }, data: { freeShipping: { increment: 1 } } });
       if (cancelled) for (const line of current.items) await tx.productOption.update({ where: { id: line.productOptionId }, data: { stock: { increment: line.quantity } } });
       const paymentStatus = action === "verify" ? "SUCCESS" as const : cancelled ? "FAILED" as const : "REVIEW_REQUIRED" as const;
       const updated = await tx.order.update({

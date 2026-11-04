@@ -27,6 +27,7 @@ export type OrderLine = {
 };
 
 export type OrderDraft = {
+  useFreeShipping?: boolean;
   useReturnCredit?: boolean;
   replacementDisputeId?: string;
   items: OrderLine[];
@@ -38,6 +39,7 @@ export type OrderDraft = {
 };
 
 export type Order = OrderDraft & {
+  usedFreeShipping?: boolean;
   creditApplied?: number;
   amountDue?: number;
   account?: { bank: string; accountNumber: string; accountName: string } | null;

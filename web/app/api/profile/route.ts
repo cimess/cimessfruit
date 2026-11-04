@@ -8,7 +8,7 @@ export async function GET() {
   const user = await getCurrentUser();
   if (!user) return json({ error: "Unauthorized" }, 401);
   const profile = await prisma.user.findUnique({ where: { id: user.id }, select: {
-    id: true, name: true, email: true, emailVerified: true, phone: true, deliveryAddress: true, notificationsEnabled: true,
+    id: true, name: true, email: true, emailVerified: true, phone: true, deliveryAddress: true, notificationsEnabled: true, freeShipping: true,
   } });
   return json({ profile });
 }
@@ -31,7 +31,7 @@ export async function PATCH(request: Request) {
   }
   try {
     const profile = await prisma.user.update({ where: { id: user.id, isActive: true }, data: parsed.data,
-      select: { id: true, name: true, email: true, emailVerified: true, phone: true, notificationsEnabled: true, deliveryAddress: true },
+      select: { id: true, name: true, email: true, emailVerified: true, phone: true, notificationsEnabled: true, freeShipping: true, deliveryAddress: true },
     });
     return json({ profile });
   } catch (error) {

@@ -38,7 +38,7 @@ export default function Account() {
   const insets = useSafeAreaInsets();
   const profile = useUserStore((state) => state.profile);
   const isLoadingProfile = useUserStore((state) => state.isLoadingProfile);
-  const loadProfile = useUserStore((state) => state.loadProfile);
+  const loadProfile = useUserStore((state) => state.refreshProfile);
   const updateDeliveryAddress = useUserStore(
     (state) => state.updateDeliveryAddress
   );
@@ -165,6 +165,7 @@ export default function Account() {
               </View>
             </View>
 
+            <Text className="mt-3 text-sm font-bold text-[#128A3A]">Free deliveries remaining: {profile?.freeShipping ?? 0}</Text>
             <Pressable
               onPress={() => router.push("/account/edit")}
               className="mt-4 flex-row items-center justify-center rounded-[22px] bg-[#FAFBF7] px-4 py-3"

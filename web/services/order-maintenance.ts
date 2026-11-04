@@ -9,6 +9,7 @@ export async function expireReservations(db: PrismaClient, now = new Date(), cac
   const count = await db.$transaction(async tx => {
     const orders = await tx.order.findMany({ where: { status: "PENDING", paymentStatus: "PENDING", createdAt: { lte: new Date(now.getTime() - reservationLifetime) }, payment: { provider: "manual_transfer", status: "PENDING" } }, include: { items: true }, orderBy: [{ createdAt: "asc" }, { id: "asc" }], take: reservationBatchSize });
     for (const order of orders) {
+      if (order.usedFreeShipping && order.userId) await tx.user.update({ where: { id: order.userId }, data: { freeShipping: { increment: 1 } } });
       if (order.creditApplied) await settleCredit(tx, order.id, "release");
       const event = orderEvent(order, "expire");
       if (event) await notify(tx, event);

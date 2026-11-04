@@ -8,4 +8,5 @@ export type UserProfile = {
   phoneNumber: string;
   deliveryAddress: DeliveryAddressDraft;
   notificationsEnabled: boolean;
+  freeShipping: number;
 };

@@ -60,6 +60,7 @@ model User {
   phone                String?   @unique
   passwordHash         String?
   role                 Role      @default(CUSTOMER)
+  freeShipping         Int       @default (5)
   isActive             Boolean   @default(true)
   selfDisabledAt       DateTime? @db.Timestamptz(3)
   deliveryAddress      Json?
@@ -227,6 +228,7 @@ model Order {
   // Snapshot of the address at checkout; subsequent profile edits must not change it.
   deliveryAddress       Json
   deliveryZoneId        String
+  usedFreeShipping      Boolean @default(false)
   deliveryFee           Int
   itemSubtotal          Int
   total                 Int
