@@ -223,6 +223,14 @@ export default function Signup() {
             </View>
           </View>
 
+          <View className="mt-5">
+            <Text className="text-sm leading-6 text-gray-600">Read our terms before creating your account. Our privacy policy explains how we use your information.</Text>
+            <View className="flex-row flex-wrap gap-4">
+              <Pressable accessibilityRole="link" onPress={() => router.push("/policies/terms")} className="py-3"><Text className="font-bold text-green-700">Terms and conditions</Text></Pressable>
+              <Pressable accessibilityRole="link" onPress={() => router.push("/policies/privacy")} className="py-3"><Text className="font-bold text-green-700">Privacy policy</Text></Pressable>
+            </View>
+          </View>
+
           <Pressable
             disabled={isSubmitting}
             onPress={handleSignup}
