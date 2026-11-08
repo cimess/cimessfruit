@@ -108,9 +108,10 @@ console.info("[google-auth] session saved");
 return user;
 } catch (error) {
   console.error("[google-auth] completion failed", {
-  type: error instanceof Error ? error.name : typeof error,
-  status: error instanceof ApiError ? error.status : undefined,
-});
+    type: error instanceof Error ? error.name : typeof error,
+    status: error instanceof ApiError ? error.status : undefined,
+    message: error instanceof Error ? error.message : String(error),
+  });
   if (error instanceof ApiError) {
     throw new Error(
       `Could not finish Google sign-in (HTTP ${error.status}). ${error.message}`

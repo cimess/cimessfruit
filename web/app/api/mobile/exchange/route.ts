@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     log("response", { status });
     const response = json(body, status);
     response.headers.set("x-auth-request-id", requestId);
+    response.headers.set("Access-Control-Expose-Headers", "x-auth-request-id");
     return response;
   };
 
@@ -63,13 +64,26 @@ export async function POST(request: Request) {
       expired: grant ? grant.expires <= new Date() : null,
     });
 
-    if (
-      !grant ||
-      grant.challenge !== challenge ||
-      grant.expires <= new Date()
-    ) {
+    if (!grant) {
+      log("grant-not-found", { codeHash });
       return reply(
-        { error: "Invalid or expired authorization code" },
+        { error: "Invalid authorization code: grant not found" },
+        401,
+      );
+    }
+
+    if (grant.challenge !== challenge) {
+      log("challenge-mismatch", { expected: grant.challenge, received: challenge });
+      return reply(
+        { error: "Invalid authorization code: challenge mismatch" },
+        401,
+      );
+    }
+
+    if (grant.expires <= new Date()) {
+      log("grant-expired", { expires: grant.expires.toISOString(), now: new Date().toISOString() });
+      return reply(
+        { error: "Invalid authorization code: grant expired" },
         401,
       );
     }
@@ -100,8 +114,12 @@ export async function POST(request: Request) {
       active: Boolean(user?.isActive),
     });
 
-    if (!user?.isActive) {
-      return reply({ error: "Unauthorized" }, 401);
+    if (!user) {
+      return reply({ error: "Unauthorized: user not found" }, 401);
+    }
+
+    if (!user.isActive) {
+      return reply({ error: "Unauthorized: user is inactive" }, 401);
     }
 
     stage = "issue-session";

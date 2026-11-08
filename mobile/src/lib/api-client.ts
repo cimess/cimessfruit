@@ -290,6 +290,12 @@ if (debugExchange) {
         throw new ApiError("The server returned an empty JSON response.", 502);
       }
       if (!response.ok) {
+        if (debugExchange) {
+          console.error("[mobile-api] exchange error response body", {
+            status: response.status,
+            body: text,
+          });
+        }
         const message =
           body &&
           typeof body === "object" &&
