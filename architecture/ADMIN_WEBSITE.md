@@ -45,10 +45,14 @@ Forgotten-password recovery and email verification are available at `/recover` a
    revokes its existing sessions, and asks the user to sign in again.
 5. The admin workspace can list, create, edit, archive, and restore products.
 
-The server reads `ADMIN_AUTHORIZATION_KEY` from `api/.env`. A strong random key
-was generated locally if the setting did not already exist. Retrieve it from
-that local file and share only with intended administrators. It must have at
-least 32 characters. Set it separately in the production server environment.
+The server reads `ADMIN_AUTHORIZATION_KEY` from its runtime environment or,
+locally, `web/.env`. Set a strong random key of at least 32 characters and share
+it only with intended administrators. Set it separately in the production
+server environment for the deployment you are using, then restart or redeploy.
+Both missing and shorter keys return the same "Admin activation is not configured"
+response. Server logs identify which condition failed without exposing the key.
+An existing process environment variable or a higher-priority `.env.local` file
+can override `web/.env`.
 Never put it in a `NEXT_PUBLIC_` or `EXPO_PUBLIC_` variable, a URL, a client bundle,
 or a committed file. Restart/reload the server after changing it.
 

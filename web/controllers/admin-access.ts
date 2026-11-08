@@ -23,7 +23,10 @@ export function createAdminAccessHandler({ db, currentUser, readBody, allowAttem
       if (user.role === "ADMIN") return json({ alreadyAdmin: true });
       if (!await allowAttempt(`admin-access:${user.id}`)) return json({ error: "Too many attempts. Try again in 15 minutes." }, 429);
       const configured = key();
-      if (!configured || configured.length < 32) return json({ error: "Admin activation is not configured. Contact the store owner." }, 503);
+      if (!configured || configured.length < 32) {
+        console.error(`[admin-access] ADMIN_AUTHORIZATION_KEY ${!configured ? "is missing or empty in the server environment" : "must contain at least 32 characters"}. Update the server environment and restart or redeploy.`);
+        return json({ error: "Admin activation is not configured. Contact the store owner." }, 503);
+      }
       const parsed = schema.safeParse(await readBody(request));
       if (!parsed.success || !matchesAdminKey(parsed.data.authorizationKey, configured)) return json({ error: "Invalid authorization key." }, 403);
       const changed = await db.$transaction(async (tx) => {

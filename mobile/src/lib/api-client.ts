@@ -173,6 +173,10 @@ export function createApiClient(deps: {
       // Credentials are owned by this client, never by a caller's headers.
       headers.delete("Authorization");
       headers.delete("Cookie");
+      const vercelBypass = process.env.EXPO_PUBLIC_VERCEL_PROTECTION_BYPASS;
+      if (vercelBypass) {
+        headers.set("x-vercel-protection-bypass", vercelBypass);
+      }
       if (typeof options.body === "string" && !headers.has("Content-Type"))
         headers.set("Content-Type", "application/json");
       // FormData/Blob bodies pass through; fetch supplies multipart boundaries.
@@ -297,11 +301,14 @@ if (debugExchange) {
           });
         }
         const message =
-          body &&
-          typeof body === "object" &&
-          "error" in body &&
-          typeof body.error === "string"
-            ? body.error
+          body && typeof body === "object"
+            ? typeof (body as { error?: unknown }).error === "string"
+              ? (body as { error: string }).error
+              : typeof (body as { error?: { message?: unknown } }).error?.message === "string"
+                ? (body as { error: { message: string } }).error.message
+                : typeof (body as { message?: unknown }).message === "string"
+                  ? (body as { message: string }).message
+                  : "Unable to complete your request."
             : "Unable to complete your request.";
         throw new ApiError(message, response.status);
       }
