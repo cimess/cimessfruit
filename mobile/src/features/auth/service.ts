@@ -78,7 +78,24 @@ export async function loginWithGoogle(): Promise<AuthUser> {
   }
   const code = returned.searchParams.get("code");
   if (!code || !/^[a-f0-9]{64}$/.test(code)) throw new Error("Missing sign-in code.");
-  return acceptSession(await apiRequest("/api/mobile/exchange", {
-    method: "POST", body: JSON.stringify({ code, verifier }),
-  }, false));
+try {
+  const session = await apiRequest(
+    "/api/mobile/exchange",
+    {
+      method: "POST",
+      body: JSON.stringify({ code, verifier }),
+    },
+    false
+  );
+
+  return await acceptSession(session);
+} catch (error) {
+  if (error instanceof ApiError) {
+    throw new Error(
+      `Could not finish Google sign-in (HTTP ${error.status}). ${error.message}`
+    );
+  }
+
+  throw error;
+}
 }

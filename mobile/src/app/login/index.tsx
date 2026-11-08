@@ -155,7 +155,7 @@ export default function Login() {
             disabled={isSubmitting}
             onPress={async () => {
               try { await googleLogin(); router.replace("/"); }
-              catch (error) { Alert.alert("Google sign-in", error instanceof Error ? error.message : "Unable to sign in."); }
+              catch (error) {router.replace("/login"); Alert.alert("Google sign-in", error instanceof Error ? error.message : "Unable to sign in."); }
             }}
             className="mt-4 flex-row items-center justify-center rounded-[24px] border border-gray-200 bg-white px-5 py-4"
           >
