@@ -60,15 +60,29 @@ export async function loginWithGoogle(): Promise<AuthUser> {
   
   // Dynamically create the callback URL (works for both Expo Go and production builds)
   const callback = Linking.createURL("auth/callback");
+  console.info("[google-auth] opening browser", {
+  apiOrigin: origin,
+  callback,
+});
   
   const result = await WebBrowser.openAuthSessionAsync(
     `${origin}/mobile-auth?challenge=${challenge}&callback=${encodeURIComponent(callback)}`,
     callback
   );
+  console.info("[google-auth] browser returned", {
+  type: result.type,
+});
   if (result.type !== "success") throw new Error("Google sign-in was cancelled.");
   
   const returned = new URL(result.url);
   const expected = new URL(callback);
+  console.info("[google-auth] callback validation", {
+  protocolMatches: returned.protocol === expected.protocol,
+  hostMatches: returned.host === expected.host,
+  pathMatches: returned.pathname === expected.pathname,
+  stateMatches: returned.searchParams.get("state") === challenge,
+  hasCode: Boolean(returned.searchParams.get("code")),
+});
   if (returned.protocol !== expected.protocol || returned.host !== expected.host || returned.pathname !== expected.pathname) {
     throw new Error("Invalid sign-in callback.");
   }
@@ -88,8 +102,15 @@ try {
     false
   );
 
-  return await acceptSession(session);
+console.info("[google-auth] exchange succeeded; saving session");
+const user = await acceptSession(session);
+console.info("[google-auth] session saved");
+return user;
 } catch (error) {
+  console.error("[google-auth] completion failed", {
+  type: error instanceof Error ? error.name : typeof error,
+  status: error instanceof ApiError ? error.status : undefined,
+});
   if (error instanceof ApiError) {
     throw new Error(
       `Could not finish Google sign-in (HTTP ${error.status}). ${error.message}`
