@@ -45,3 +45,6 @@ next-env.d.ts
 /app/generated/prisma
 
 /generated/prisma
+
+# in mobile/.gitignore or root .gitignore
+android/app/google-services.json

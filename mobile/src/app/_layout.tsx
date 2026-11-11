@@ -15,6 +15,9 @@ import { useLoadingStore } from "@/features/ui/loadingStore";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import {syncPushRegistration} from "@/features/notifications/client";
+import * as Location from "expo-location";
+
 const authRoutes = ["/login", "/signup", "/auth/callback"];
 
 export default function RootLayout() {
@@ -60,6 +63,15 @@ export default function RootLayout() {
     }
   }, [hasCheckedSession, isCheckingSession, pathname, router, user]);
 
+  // for push notification and location upon login
+useEffect(() => {
+  if (!user || !hasCheckedSession) return;
+  // 1. Notifications
+  void syncPushRegistration(true).catch(() => {});
+  // 2. Location (foreground only)
+  void Location.requestForegroundPermissionsAsync().catch(() => {});
+}, [user?.id, hasCheckedSession]); // runs once per login
+
   return (
 
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -72,7 +84,7 @@ export default function RootLayout() {
           <LoadingOverlay />
           <ToastHost />
           <OrderNotifications />
-          <PushNotifications />
+          <PushNotifications  />
           <Realtime />
         </SafeAreaProvider>
       </QueryClientProvider>

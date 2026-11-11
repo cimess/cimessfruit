@@ -16,7 +16,7 @@ export default function PushNotifications() {
     if (!userId || !pushSupported()) return;
     let stopped = false;
     const cleanups: (() => void)[] = [];
-    const sync = () => { if (AppState.currentState === "active") void syncPushRegistration().catch(() => { /* Retry on foreground; explicit enable surfaces errors. */ }); };
+    const sync = () => { if (AppState.currentState === "active") void syncPushRegistration(true).catch(() => { /* Retry on foreground; explicit enable surfaces errors. */ }); };
     sync();
     const appState = AppState.addEventListener("change", sync);
     cleanups.push(() => appState.remove());
