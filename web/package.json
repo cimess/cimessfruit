@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-      "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
@@ -37,6 +37,7 @@
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.11.0",
     "dotenv": "^18.0.8",
+    "google-auth-library": "^11.3.4",
     "html-to-text": "^10.0.1",
     "ioredis": "^6.0.0",
     "next": "16.4.1",

@@ -4,7 +4,7 @@ import { createSerialQueue } from "@/lib/api-client";
 import {
   fetchCurrentSession,
   loginUser,
-  loginWithGoogle,
+  loginWithGoogleIdToken,
   logoutUser,
   signupUser,
 } from "@/features/auth/service";
@@ -27,10 +27,11 @@ type AuthState = {
   isCheckingSession: boolean;
   isSubmitting: boolean;
   error: string | null;
+
   checkSession: () => Promise<void>;
   login: (draft: LoginDraft) => Promise<AuthUser>;
   signup: (draft: SignupDraft) => Promise<AuthUser>;
-  googleLogin: () => Promise<AuthUser>;
+  googleLogin: (idToken:string) => Promise<AuthUser>;
   logout: () => Promise<void>;
   clearError: () => void;
 };
@@ -100,10 +101,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       throw error;
     }
   }),
-  googleLogin: () => runAuthOperation(async () => {
+  googleLogin: (idToken: string) => runAuthOperation(async () => {
     set({ isSubmitting: true, error: null });
     try {
-      const user = await loginWithGoogle();
+      const user = await loginWithGoogleIdToken(idToken);
       await commitAuthenticatedUser(user.id, () => {
         resetPrivateData();
         set({ user, isSubmitting: false, hasCheckedSession: true });

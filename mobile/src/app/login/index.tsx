@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,8 +12,11 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GoogleSignin, GoogleSigninButton,statusCodes,isErrorWithCode } from "@react-native-google-signin/google-signin";
 
 import { useAuthStore } from "@/features/auth/store";
+import { loginWithGoogleIdToken } from "@/features/auth/service";
+import { commitAuthenticatedUser } from "@/lib/api";
 
 const displayFont = Platform.select({
   ios: "AvenirNext-Heavy",
@@ -31,6 +34,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const emailOrPhoneError =
     hasSubmitted && emailOrPhone.trim().length <= 2
@@ -43,6 +47,16 @@ export default function Login() {
   const canSubmit =
     emailOrPhone.trim().length > 2 && password.trim().length >= 6;
 
+
+      useEffect(() => {
+    GoogleSignin.configure({
+      // MUST be your existing WEB Client ID
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: false,
+    });
+  }, []);
+
+    // 1. Email & Password handler 
   const handleLogin = async () => {
     setHasSubmitted(true);
 
@@ -58,6 +72,47 @@ export default function Login() {
       router.replace("/");
     } catch (error) {
       Alert.alert("Login failed", error instanceof Error ? error.message : "Please try again.");
+    }
+  };
+
+  // 2. Google native login handler
+  const handleGoogleLogin = async () => {
+    if (isSubmitting || isGoogleLoading) return;
+
+    setIsGoogleLoading(true);
+
+    try {
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      const idToken = response.data?.idToken;
+
+      if (!idToken) {
+        throw new Error("Google did not return an ID token");
+      }
+
+      // Pass the idToken from Google to your store:
+      await googleLogin(idToken);
+
+      // Redirect to home upon successful login
+      router.replace("/");
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            break;
+          case statusCodes.SIGN_IN_CANCELLED:
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            Alert.alert("Error", "Google Play Services is not available.");
+            break;
+          default:
+            Alert.alert("Google Sign-In Error", error.message);
+        }
+      } else {
+        Alert.alert("Login Error", error instanceof Error ? error.message : "Unable to sign in.");
+      }
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -150,18 +205,13 @@ export default function Login() {
           </Pressable>
 
           {Platform.OS !== "ios" && (
-          <Pressable
-            accessibilityRole="button"
-            disabled={isSubmitting}
-            onPress={async () => {
-              try { await googleLogin(); router.replace("/"); }
-              catch (error) {router.replace("/login"); Alert.alert("Google sign-in", error instanceof Error ? error.message : "Unable to sign in."); }
-            }}
-            className="mt-4 flex-row items-center justify-center rounded-[24px] border border-gray-200 bg-white px-5 py-4"
-          >
-            <Ionicons name="logo-google" size={20} color="#128A3A" />
-            <Text className="ml-3 text-base font-extrabold text-[#033035]">Continue with Google</Text>
-          </Pressable>
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
+            disabled={isSubmitting||isGoogleLoading}
+            onPress={handleGoogleLogin}
+          />
+         
           )}
 
           <Pressable

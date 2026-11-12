@@ -1,11 +1,8 @@
 import { clearDeviceDrafts } from "../uploads/drafts";
 import { Platform } from "react-native";
-import * as Crypto from "expo-crypto";
-import * as WebBrowser from "expo-web-browser";
 import { z } from "zod";
 import type { AuthUser, LoginDraft, SignupDraft } from "@/features/auth/types";
-import { ApiError, apiOrigin, apiRequest, clearStoredSession, getSessionSnapshot, updateStoredUser, saveSession } from "@/lib/api";
-import * as Linking from "expo-linking";
+import { ApiError, apiRequest, clearStoredSession, getSessionSnapshot, updateStoredUser, saveSession } from "@/lib/api";
 
 
 const userSchema = z.object({
@@ -52,72 +49,14 @@ export async function logoutUser(): Promise<void> {
   }
   try { clearDeviceDrafts(); } finally { await clearStoredSession(); }
 }
-export async function loginWithGoogle(): Promise<AuthUser> {
-  if (Platform.OS === "ios") throw new Error("Use your CimessFruit email and password on iPhone.");
-  const origin = apiOrigin();
-  const verifier = Array.from(await Crypto.getRandomBytesAsync(32), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  const challenge = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, verifier);
-  
-  // Dynamically create the callback URL (works for both Expo Go and production builds)
-  const callback = Linking.createURL("auth/callback");
-  console.info("[google-auth] opening browser", {
-  apiOrigin: origin,
-  callback,
-});
-  
-  const result = await WebBrowser.openAuthSessionAsync(
-    `${origin}/mobile-auth?challenge=${challenge}&callback=${encodeURIComponent(callback)}`,
-    callback
-  );
-  console.info("[google-auth] browser returned", {
-  type: result.type,
-});
-  if (result.type !== "success") throw new Error("Google sign-in was cancelled.");
-  
-  const returned = new URL(result.url);
-  const expected = new URL(callback);
-  console.info("[google-auth] callback validation", {
-  protocolMatches: returned.protocol === expected.protocol,
-  hostMatches: returned.host === expected.host,
-  pathMatches: returned.pathname === expected.pathname,
-  stateMatches: returned.searchParams.get("state") === challenge,
-  hasCode: Boolean(returned.searchParams.get("code")),
-});
-  if (returned.protocol !== expected.protocol || returned.host !== expected.host || returned.pathname !== expected.pathname) {
-    throw new Error("Invalid sign-in callback.");
-  }
-  // Extract state & code from query params
-  if (returned.searchParams.get("state") !== challenge) {
-    throw new Error("Invalid sign-in response.");
-  }
-  const code = returned.searchParams.get("code");
-  if (!code || !/^[a-f0-9]{64}$/.test(code)) throw new Error("Missing sign-in code.");
-try {
-  const session = await apiRequest(
-    "/api/mobile/exchange",
-    {
-      method: "POST",
-      body: JSON.stringify({ code, verifier }),
-    },
-    false
-  );
 
-console.info("[google-auth] exchange succeeded; saving session");
-const user = await acceptSession(session);
-console.info("[google-auth] session saved");
-return user;
-} catch (error) {
-  console.error("[google-auth] completion failed", {
-    type: error instanceof Error ? error.name : typeof error,
-    status: error instanceof ApiError ? error.status : undefined,
-    message: error instanceof Error ? error.message : String(error),
-  });
-  if (error instanceof ApiError) {
-    throw new Error(
-      `Could not finish Google sign-in (HTTP ${error.status}). ${error.message}`
-    );
-  }
+export async function loginWithGoogleIdToken(idToken: string): Promise<AuthUser> {
+    if (Platform.OS === "ios") throw new Error("Pls use your CimessFruit account and password to login.");
 
-  throw error;
-}
+  const data = await apiRequest("/api/google", {
+    method: "POST",
+    body: JSON.stringify({ idToken }),
+  }, false);
+
+  return acceptSession(data);
 }
