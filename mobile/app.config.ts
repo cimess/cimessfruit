@@ -1,42 +1,71 @@
 import type { ExpoConfig, ConfigContext } from "expo/config";
 
-// Expo selects this TypeScript entry point. Explicitly compose the existing
-// JavaScript build settings so package IDs, maps, and release checks also run.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const configureBuild = require("./app.config.js") as (context: ConfigContext) => ExpoConfig;
-
 // Keep credentials out of git. EAS can supply GOOGLE_SERVICES_JSON as a file variable.
-export default (context: ConfigContext): ExpoConfig => {
-  const config = configureBuild(context);
-  return ({
-  ...config,
+export default ({ config }: ConfigContext): ExpoConfig => {
+  const release = ["preview", "production"].includes(process.env.EAS_BUILD_PROFILE ?? "");
+  if (release) {
+    const origin = process.env.EXPO_PUBLIC_API_URL;
+    let url: URL;
+    try {
+      url = new URL(origin ?? "");
+    } catch {
+      throw new Error("Set EXPO_PUBLIC_API_URL to the deployed HTTPS API origin before building.");
+    }
+    if (url.protocol !== "https:" || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
+      throw new Error("Release API URL must be an HTTPS origin without credentials or a path.");
+    }
+    if (process.env.EAS_BUILD_PLATFORM === "android" && !process.env.GOOGLE_MAPS_ANDROID_API_KEY) {
+      throw new Error("Set GOOGLE_MAPS_ANDROID_API_KEY for standalone Android maps.");
+    }
+  }
 
-  name: config.name ?? "CimessFruit",
-  slug: config.slug ?? "cimessfruit",
+  return {
+    ...config,
 
-  // Preserve existing plugins and add expo-web-browser
-  plugins: [
-    ...(config.plugins ?? []),
-    "expo-web-browser",
-  ],
+    name: config.name ?? "CimessFruit",
+    slug: config.slug ?? "cimessfruit",
 
-  android: {
-    ...config.android,
-    ...(process.env.GOOGLE_SERVICES_JSON
-      ? { googleServicesFile: process.env.GOOGLE_SERVICES_JSON }
-      : {}),
-  },
+    android: {
+      ...config.android,
+      package: "com.cimessfruit",
+      ...(process.env.GOOGLE_SERVICES_JSON
+        ? { googleServicesFile: process.env.GOOGLE_SERVICES_JSON }
+        : {}),
+    },
 
-  extra: {
-    ...config.extra,
-    ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID
-      ? {
-          eas: {
-            ...config.extra?.eas,
-            projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
-          },
-        }
-      : {}),
-  },
-  });
+    ios: {
+      ...config.ios,
+      bundleIdentifier: "com.cimessfruit",
+    },
+
+    plugins: [
+      ...(config.plugins ?? []),
+      [
+        "expo-location",
+        {
+          locationWhenInUsePermission:
+            "Use your location to choose a delivery entrance or look up the address of your selected pin.",
+        },
+      ],
+      [
+        "react-native-maps",
+        {
+          androidGoogleMapsApiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY ?? "",
+        },
+      ],
+      "expo-web-browser",
+    ],
+
+    extra: {
+      ...config.extra,
+      ...(process.env.EXPO_PUBLIC_EAS_PROJECT_ID
+        ? {
+            eas: {
+              ...config.extra?.eas,
+              projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
+            },
+          }
+        : {}),
+    },
+  };
 };
