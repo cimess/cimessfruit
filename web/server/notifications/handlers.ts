@@ -118,7 +118,8 @@ export async function notificationWorker(request: Request, dependencies?: Notifi
     const result = await processNotification(db, parsed.data.eventId, expoTransport, iosEnabled());
     if (result.pending) await publish(parsed.data.eventId, result.delay);
     return json({ ok: true, pending: result.pending });
-  } catch {
+    } catch (workerError) {
+    console.error("Notification worker failed", workerError);
     return Response.json({ error: "Notification processing deferred" }, {
       status: 503, headers: { "Cache-Control": "private, no-store", "Retry-After": "60" },
     });

@@ -60,7 +60,7 @@ model User {
   phone                String?   @unique
   passwordHash         String?
   role                 Role      @default(CUSTOMER)
-  freeShipping         Int       @default (5)
+  freeShipping         Int       @default (1)
   isActive             Boolean   @default(true)
   selfDisabledAt       DateTime? @db.Timestamptz(3)
   deliveryAddress      Json?

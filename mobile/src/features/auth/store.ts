@@ -13,6 +13,7 @@ import type { AuthUser, LoginDraft, SignupDraft } from "@/features/auth/types";
 import { commitAuthenticatedUser, setUnauthorizedHandler } from "@/lib/api";
 import { useUserStore } from "@/features/user/store";
 import { useOrderStore } from "@/features/order/store";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 const runAuthOperation = createSerialQueue();
 
@@ -119,6 +120,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isSubmitting: true, error: null });
 
     try {
+      try{
+        const curentUSER=await GoogleSignin.getCurrentUser();
+        if(curentUSER){
+          await GoogleSignin.signOut();
+        }
+      }catch(error){
+        console.info("GOOGLE SIGNOUT not required or failed",error)
+
+      }
       await logoutUser();
       resetPrivateData();
       set({ user: null, isSubmitting: false, hasCheckedSession: true });

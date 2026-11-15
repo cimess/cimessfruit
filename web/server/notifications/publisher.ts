@@ -58,11 +58,26 @@ export async function recoverNotifications(db: PrismaClient, delivery = transpor
 export async function kickNotifications(db: PrismaClient, delivery = transport) {
   await flushChanges(db);
   if (!enabled()) return;
-  try { await recoverNotifications(db, delivery); }
-  catch {
+  try {
+    await recoverNotifications(db, delivery);
+  } catch (recoverError) {
     // If only batch publishing failed, let QStash retry a recovery job independently.
     // If QStash is entirely unavailable, DB records remain for a later trigger/daily cleanup.
-    try { await delivery.schedule(undefined, 60); }
-    catch { console.error("Notification publishing deferred; outbox recovery required"); }
+    try {
+      await delivery.schedule(undefined, 60);
+    } catch (scheduleError) {
+      console.error("Notification publishing deferred; outbox recovery required", {
+        recoverError: recoverError instanceof Error ? recoverError.message : String(recoverError),
+        scheduleError: scheduleError instanceof Error ? scheduleError.message : String(scheduleError),
+        diagnostics: {
+          NOTIFICATIONS_ENABLED: process.env.NOTIFICATIONS_ENABLED,
+          NOTIFICATIONS_ORIGIN: process.env.NOTIFICATIONS_ORIGIN || "<empty/unset>",
+          hasQstashToken: Boolean(process.env.QSTASH_TOKEN),
+          hasCurrentSigningKey: Boolean(process.env.QSTASH_CURRENT_SIGNING_KEY),
+          hasNextSigningKey: Boolean(process.env.QSTASH_NEXT_SIGNING_KEY),
+          qstashUrl: process.env.QSTASH_URL || "https://qstash.upstash.io",
+        },
+      });
+    }
   }
 }
