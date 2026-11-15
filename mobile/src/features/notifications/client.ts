@@ -19,7 +19,11 @@ function installationId() {
     return id;
   })().catch(error => { installation = undefined; throw error; });
 }
+let syncPromise: Promise<void> | null = null;
 export async function syncPushRegistration(requestPermission = false) {
+  if (syncPromise) return syncPromise;
+  syncPromise = (async () => {
+  
   if (!pushSupported()) {
     if (requestPermission) throw Error("Push needs an enabled Android development/release build. iOS activation is deferred.");
     return;
@@ -48,4 +52,9 @@ export async function syncPushRegistration(requestPermission = false) {
   const current = await getSessionSnapshot();
   if (current.version !== snapshot.version || current.session?.token !== snapshot.session.token) return;
   await apiRequest("/api/notifications/devices", { method: "POST", body: JSON.stringify({ installationId: id, token, platform: Platform.OS }) });
+
+})().finally(() => {
+    syncPromise = null;
+  });
+  return syncPromise;
 }

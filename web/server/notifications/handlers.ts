@@ -46,6 +46,7 @@ export async function notificationPreferences(request: Request, dependencies?: N
   return json(parsed.data);
 }
 
+// web/server/notifications/handlers.ts
 export async function registerDevice(request: Request, dependencies?: NotificationDependencies) {
   const deps = await notificationDependencies(dependencies);
   const { db, readBody } = deps;
@@ -57,19 +58,33 @@ export async function registerDevice(request: Request, dependencies?: Notificati
   if (!parsed.success) return json({ error: "Invalid push registration" }, 400);
   if (parsed.data.platform === "ios" && !iosEnabled()) return json({ error: "iOS push activation is deferred" }, 409);
   const { installationId, token, platform } = parsed.data;
-  await db.$transaction(async tx => {
-    // Refreshes/reinstalls must not retain deliveries for a previous owner/session/token.
-    const old = await tx.pushInstallation.findUnique({ where: { id: installationId } });
-    if (old && (old.userId !== owner.userId || old.sessionId !== owner.id || old.token !== token)) {
-      await tx.pushInstallation.delete({ where: { id: installationId } });
+
+  // Retry on serialization conflict (P2034)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await db.$transaction(async tx => {
+        const old = await tx.pushInstallation.findUnique({ where: { id: installationId } });
+        if (old && (old.userId !== owner.userId || old.sessionId !== owner.id || old.token !== token)) {
+          await tx.pushInstallation.delete({ where: { id: installationId } });
+        }
+        await tx.pushInstallation.deleteMany({ where: { token, id: { not: installationId } } });
+        await tx.pushInstallation.upsert({
+          where: { id: installationId },
+          create: { id: installationId, token, platform, userId: owner.userId, sessionId: owner.id },
+          update: { token, platform, userId: owner.userId, sessionId: owner.id },
+        });
+      }); // Omitting "Serializable" uses ReadCommitted, or keep isolationLevel if retrying
+      return json({ ok: true });
+    } catch (error: any) {
+      if (error?.code === "P2034" && attempt < 2) {
+        // Wait briefly (with jitter) and retry
+        await new Promise(resolve => setTimeout(resolve, 50 * (attempt + 1) + Math.random() * 50));
+        continue;
+      }
+      throw error;
     }
-    await tx.pushInstallation.deleteMany({ where: { token, id: { not: installationId } } });
-    await tx.pushInstallation.upsert({
-      where: { id: installationId },
-      create: { id: installationId, token, platform, userId: owner.userId, sessionId: owner.id },
-      update: { token, platform, userId: owner.userId, sessionId: owner.id },
-    });
-  }, { isolationLevel: "Serializable" });
+  }
+
   return json({ ok: true });
 }
 
