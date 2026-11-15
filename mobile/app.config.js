@@ -9,8 +9,8 @@ module.exports = ({ config }) => {
   }
   return {
     ...config,
-    android: { ...config.android, package: "com.cimessfruit.app" },
-    ios: { ...config.ios, bundleIdentifier: "com.cimessfruit.app" },
+    android: { ...config.android, package: "com.cimessfruit" },
+    ios: { ...config.ios, bundleIdentifier: "com.cimessfruit" },
     plugins: [...(config.plugins ?? []),
       ["expo-location", { locationWhenInUsePermission: "Use your location to choose a delivery entrance or look up the address of your selected pin." }],
       ["react-native-maps", { androidGoogleMapsApiKey: process.env.GOOGLE_MAPS_ANDROID_API_KEY ?? "" }],

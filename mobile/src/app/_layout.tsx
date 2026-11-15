@@ -1,5 +1,6 @@
 import Realtime from "@/features/realtime/Realtime";
 import PushNotifications from "@/features/notifications/PushNotifications";
+import NotificationPermissionModal from "@/features/notifications/NotificationPermissionModal";
 import { Stack, usePathname, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -67,7 +68,9 @@ export default function RootLayout() {
 useEffect(() => {
   if (!user || !hasCheckedSession) return;
   // 1. Notifications
-  void syncPushRegistration(true).catch(() => {});
+  void syncPushRegistration(true).catch(err => {
+    console.error("[Push] Registration error:", err);
+  });
   // 2. Location (foreground only)
   void Location.requestForegroundPermissionsAsync().catch(() => {});
 }, [user?.id, hasCheckedSession]); // runs once per login
@@ -85,6 +88,7 @@ useEffect(() => {
           <ToastHost />
           <OrderNotifications />
           <PushNotifications  />
+          <NotificationPermissionModal />
           <Realtime />
         </SafeAreaProvider>
       </QueryClientProvider>

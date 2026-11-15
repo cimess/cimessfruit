@@ -39,7 +39,10 @@ export async function syncPushRegistration(requestPermission = false) {
     if (requestPermission) throw Error("Notifications are disabled. You can allow them in your phone settings.");
     return;
   }
-  const projectId = Constants.easConfig?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
+ const projectId =
+    process.env.EXPO_PUBLIC_EAS_PROJECT_ID ||
+    Constants.easConfig?.projectId ||
+    Constants.expoConfig?.extra?.eas?.projectId;
   if (!projectId) throw Error("Configure your EAS project ID before enabling push.");
   const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
   const current = await getSessionSnapshot();

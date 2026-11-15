@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "CimessFruit",
-    "slug": "cimessfruit",
+    "slug": "cimess",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo/logo.png",
@@ -16,6 +16,8 @@
       "backgroundColor": "#00000000"
     },
     "android": {
+      "package": "com.cimessfruit",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/logo/logo.png"
@@ -52,6 +54,11 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1515973f-6170-4b36-9f8c-7dc657bbd955"
+      }
     }
   }
 }
