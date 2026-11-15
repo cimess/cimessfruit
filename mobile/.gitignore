@@ -45,5 +45,4 @@ example
 # architecture docs
 /architecture
 
-# Firebase client config is supplied by the build environment.
-google-services.json
+
