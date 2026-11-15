@@ -105,21 +105,37 @@ export async function notificationWorker(request: Request, dependencies?: Notifi
       chunks.push(value);
     }
     const body = Buffer.concat(chunks).toString("utf8");
-    if (!await verifySignature(body, request.headers.get("upstash-signature") ?? "")) return json({ error: "Invalid signature" }, 401);
+    const signature = request.headers.get("upstash-signature") ?? "";
+    const isValid = await verifySignature(body, signature);
+
+    if (!isValid) {
+      console.warn("[Worker] Rejected webhook: Invalid Upstash signature");
+      return json({ error: "Invalid signature" }, 401);
+    }
+
     const parsed = z.union([
       z.strictObject({ eventId: z.uuid() }),
       z.strictObject({ type: z.literal("recover"), after: z.strictObject({ createdAt: z.iso.datetime(), id: z.uuid() }).optional() }),
     ]).safeParse(JSON.parse(body));
-    if (!parsed.success) return json({ error: "Invalid event" }, 400);
+
+    if (!parsed.success) {
+      console.warn("[Worker] Rejected webhook: Invalid body schema", body);
+      return json({ error: "Invalid event" }, 400);
+    }
+
     if ("type" in parsed.data) {
+      console.log("[Worker] Running outbox recovery job");
       const result = await recoverNotifications(db, undefined, parsed.data.after);
       return json({ ok: true, ...result });
     }
+
+    console.log(`[Worker] Processing event: ${parsed.data.eventId}`);
     const result = await processNotification(db, parsed.data.eventId, expoTransport, iosEnabled());
+    console.log(`[Worker] Event ${parsed.data.eventId} finished. Pending: ${result.pending}`);
     if (result.pending) await publish(parsed.data.eventId, result.delay);
     return json({ ok: true, pending: result.pending });
-    } catch (workerError) {
-    console.error("Notification worker failed", workerError);
+  } catch (workerError) {
+    console.error("[Worker] Processing failed with error:", workerError);
     return Response.json({ error: "Notification processing deferred" }, {
       status: 503, headers: { "Cache-Control": "private, no-store", "Retry-After": "60" },
     });
