@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1037452716184",
+    "project_id": "cimessfruit",
+    "storage_bucket": "cimessfruit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1037452716184:android:41d44730eb4581c5c2c8ed",
+        "android_client_info": {
+          "package_name": "com.cimessfruit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj9fyopHawg7TBSRqfFKi2g0AWx2-yA6Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

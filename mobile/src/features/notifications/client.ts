@@ -33,7 +33,9 @@ export async function syncPushRegistration(requestPermission = false) {
   // Import only after the Expo Go/platform gate; avoid unavailable native module initialization.
   const Notifications = await import("expo-notifications");
   if (Platform.OS === "android") await Notifications.setNotificationChannelAsync("updates", {
-    name: "Shop and order updates", importance: Notifications.AndroidImportance.DEFAULT,
+    name: "Shop and order updates",
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: "cm_notice.mp3",
   });
   let permission = await Notifications.getPermissionsAsync();
   if (!permission.granted && requestPermission && permission.canAskAgain) permission = await Notifications.requestPermissionsAsync();

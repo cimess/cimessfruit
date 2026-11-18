@@ -1,0 +1,32 @@
+# OSX
+#
+.DS_Store
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+gradle/gradle-daemon-jvm.properties
+
+# Keystore & signing credentials (managed by EAS Credentials in the cloud)
+*.keystore
+*.jks
+*.p12
+*.key
+!app/debug.keystore
+
+# Logs & temporary files
+*.log
+install-log.txt
+
+# generated inline modules
+app/src/main/java/inline/
+
+# Bundle artifacts
+*.jsbundle
+

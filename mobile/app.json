@@ -41,7 +41,14 @@
       ],
       "expo-image",
       "expo-secure-store",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#128A3A",
+          "sounds": ["./assets/sounds/cm_notice.mp3"]
+        }
+      ],
       [
         "expo-image-picker",
         {
